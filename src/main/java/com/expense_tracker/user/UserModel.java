@@ -1,8 +1,7 @@
-package com.expense_tracker.user.model;
+package com.expense_tracker.user;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -139,12 +138,6 @@ public class UserModel {
 	public UserModel createdAt(OffsetDateTime createdAt) {
 		setCreatedAt(createdAt);
 		return this;
-	}
-
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(id, username, password, firstName, lastName, dateOfBirth, createdAt);
 	}
 
 	@Override

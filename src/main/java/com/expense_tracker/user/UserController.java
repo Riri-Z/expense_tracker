@@ -1,4 +1,4 @@
-package com.expense_tracker.user.controller;
+package com.expense_tracker.user;
 
 import java.util.Optional;
 
@@ -7,9 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.expense_tracker.user.model.UserModel;
-import com.expense_tracker.user.service.UserService;
 
 @RestController
 public class UserController {
@@ -32,8 +29,6 @@ public class UserController {
 			}
 		}
 		catch (Exception e) {
-			// Log l'exception
-			// logger.error("Error fetching user with id " + id, e);
 
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 				.body("An error occurred while fetching the user: " + e.getMessage());

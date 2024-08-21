@@ -1,11 +1,8 @@
-package com.expense_tracker.user.service;
+package com.expense_tracker.user;
 
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
-
-import com.expense_tracker.user.model.UserModel;
-import com.expense_tracker.user.repository.UserRepository;
 
 @Service
 public class UserService {

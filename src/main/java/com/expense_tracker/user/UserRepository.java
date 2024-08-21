@@ -1,9 +1,7 @@
-package com.expense_tracker.user.repository;
+package com.expense_tracker.user;
 
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
-
-import com.expense_tracker.user.model.UserModel;
 
 @Repository
 public interface UserRepository extends CrudRepository<UserModel, Long> {
