@@ -1,6 +1,5 @@
 package com.expense_tracker.user;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,14 +18,19 @@ import com.expense_tracker.security.AuthRequest;
 @RequestMapping("/auth")
 public class UserController {
 
-	@Autowired
-	private UserInfoService service;
+	private final UserInfoService service;
 
-	@Autowired
-	private JwtService jwtService;
+	private final JwtService jwtService;
 
-	@Autowired
-	private AuthenticationManager authenticationManager;
+	private final AuthenticationManager authenticationManager;
+
+	public UserController(UserInfoService service, JwtService jwtService, AuthenticationManager authenticationManager) {
+
+		this.service = service;
+		this.jwtService = jwtService;
+		this.authenticationManager = authenticationManager;
+
+	}
 
 	@GetMapping("/welcome")
 	public String welcome() {

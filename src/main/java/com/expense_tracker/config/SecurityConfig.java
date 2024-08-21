@@ -1,6 +1,5 @@
 package com.expense_tracker.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,18 +24,21 @@ import com.expense_tracker.user.UserInfoService;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-	@Autowired
-	private JwtAuthFilter authFilter;
+	private final UserInfoService userInfoService;
 
-	@Bean
-	public UserDetailsService userDetailsService() {
-		return new UserInfoService(); // Ensure UserInfoService implements
-										// UserDetailsService
+	public SecurityConfig(UserInfoService userInfoService) {
+		this.userInfoService = userInfoService;
 	}
 
 	@Bean
-	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-		http.csrf(csrf -> csrf.disable()) // disable for stateless apis
+	public UserDetailsService userDetailsService() {
+		return userInfoService;
+	}
+
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter authFilter,
+			AuthenticationProvider authenticationProvider) throws Exception {
+		return http.csrf(csrf -> csrf.disable()) // disable for stateless apis
 			.authorizeHttpRequests(
 					auth -> auth.requestMatchers("/auth/welcome", "/auth/addNewUser", "/auth/generateToken")
 						.permitAll()
@@ -48,16 +50,15 @@ public class SecurityConfig {
 						.authenticated() // Protect all other endpoints
 
 			)
-			.sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // No
-																									// sessions
-			)
-			.authenticationProvider(authenticationProvider()) // Custom authentication
-																// provider
-			.addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class); // Add
-																						// JWT
-																						// filter
+			// No sessions
+			.sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 
-		return http.build();
+			)
+			// Custom authentication provider
+			.authenticationProvider(authenticationProvider)
+			// Add JWT filter
+			.addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
+			.build();
 	}
 
 	@Bean
@@ -66,10 +67,11 @@ public class SecurityConfig {
 	}
 
 	@Bean
-	public AuthenticationProvider authenticationProvider() {
+	public AuthenticationProvider authenticationProvider(UserDetailsService userDetailsService,
+			PasswordEncoder passwordEncoder) {
 		DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-		authenticationProvider.setUserDetailsService(userDetailsService());
-		authenticationProvider.setPasswordEncoder(passwordEncoder());
+		authenticationProvider.setUserDetailsService(userDetailsService);
+		authenticationProvider.setPasswordEncoder(passwordEncoder);
 		return authenticationProvider;
 	}
 

@@ -10,14 +10,17 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 public class UserInfoDetails implements UserDetails {
 
-	private final String username; // Changed from 'name' to 'username' for clarity
+	private final String name;
+
+	private final String username;
 
 	private final String password;
 
 	private final List<GrantedAuthority> authorities;
 
 	public UserInfoDetails(UserInfo userInfo) {
-		this.username = userInfo.getName(); // Assuming 'name' is used as 'username'
+		this.name = userInfo.getName();
+		this.username = userInfo.getUsername();
 		this.password = userInfo.getPassword();
 		this.authorities = List.of(userInfo.getRoles().split(","))
 			.stream()
@@ -39,6 +42,10 @@ public class UserInfoDetails implements UserDetails {
 	@Override
 	public String getUsername() {
 		return username;
+	}
+
+	public String getName() {
+		return name;
 	}
 
 	@Override

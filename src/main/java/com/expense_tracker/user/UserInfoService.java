@@ -2,7 +2,6 @@ package com.expense_tracker.user;
 
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -12,11 +11,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserInfoService implements UserDetailsService {
 
-	@Autowired
-	private UserInfoRepository repository;
+	private final UserInfoRepository repository;
 
-	@Autowired
-	private PasswordEncoder encoder;
+	private final PasswordEncoder encoder;
+
+	public UserInfoService(UserInfoRepository repository, PasswordEncoder encoder) {
+		this.repository = repository;
+		this.encoder = encoder;
+	}
 
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
