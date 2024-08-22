@@ -19,6 +19,7 @@ import jakarta.annotation.PostConstruct;
 
 @Component
 public class JwtService {
+
 	@Value("${jwt.secret}")
 	private String secret;
 
@@ -38,13 +39,13 @@ public class JwtService {
 	// Create a JWT token with specified claims and subject (user name)
 	private String createToken(Map<String, Object> claims, String userName) {
 		return Jwts.builder()
-				.setClaims(claims)
-				.setSubject(userName)
-				.setIssuedAt(new Date())
-				// Token valid for 30 minutes
-				.setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30))
-				.signWith(getSignKey(), SignatureAlgorithm.HS256)
-				.compact();
+			.setClaims(claims)
+			.setSubject(userName)
+			.setIssuedAt(new Date())
+			// Token valid for 30 minutes
+			.setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30))
+			.signWith(getSignKey(), SignatureAlgorithm.HS256)
+			.compact();
 	}
 
 	// Get the signing key for JWT token
@@ -82,7 +83,10 @@ public class JwtService {
 	// Validate the token against user details and expiration
 	public Boolean validateToken(String token, UserDetails userDetails) {
 		final String username = extractUsername(token);
-		return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+		boolean usernameMatches = username.equals(userDetails.getUsername());
+		boolean tokenNotExpired = !isTokenExpired(token);
+
+		return usernameMatches && tokenNotExpired;
 	}
 
 }

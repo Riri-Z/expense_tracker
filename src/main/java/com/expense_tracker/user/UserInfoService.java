@@ -2,6 +2,7 @@ package com.expense_tracker.user;
 
 import java.util.Optional;
 
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -22,7 +23,7 @@ public class UserInfoService implements UserDetailsService {
 
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		Optional<UserInfo> userDetail = repository.findByEmail(username);
+		Optional<UserInfo> userDetail = repository.findByUsername(username);
 
 		// Converting UserInfo to UserDetails
 		return userDetail.map(UserInfoDetails::new)
@@ -30,6 +31,13 @@ public class UserInfoService implements UserDetailsService {
 	}
 
 	public String addUser(UserInfo userInfo) {
+		// verify if username or email already exist
+		if (repository.existsByEmail(userInfo.getEmail())) {
+			throw new DuplicateKeyException("Email already exists :" + userInfo.getEmail());
+		}
+		if (repository.existsByUsername((userInfo.getUsername()))) {
+			throw new DuplicateKeyException("Username already exists :" + userInfo.getUsername());
+		}
 		// Encode password before saving the user
 		userInfo.setPassword(encoder.encode(userInfo.getPassword()));
 		repository.save(userInfo);

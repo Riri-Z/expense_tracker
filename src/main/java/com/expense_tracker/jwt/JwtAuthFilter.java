@@ -43,7 +43,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 			if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
 				token = authHeader.substring(7); // Extract token
-				username = jwtService.extractUsername(token); // Extract username from token
+				username = jwtService.extractUsername(token); // Extract username from
+																// token
 			}
 			// If the token is valid and no authentication is set in the context
 			if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -51,19 +52,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 				UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
 				// Validate token and set authentication
-				if (Boolean.TRUE.equals(jwtService.validateToken(token, userDetails))) {
+				if ((jwtService.validateToken(token, userDetails))) {
 					UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails,
 							null, userDetails.getAuthorities());
 					authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 					SecurityContextHolder.getContext().setAuthentication(authToken);
-				} else {
+				}
+				else {
 					logger.warn("Invalid JWT token for user: {}" + username);
 				}
 			}
 
 			// Continue the filter chain
 			filterChain.doFilter(request, response);
-		} catch (ServletException | java.io.IOException | UsernameNotFoundException e) {
+		}
+		catch (ServletException | java.io.IOException | UsernameNotFoundException e) {
 			logger.error("Error processing JWT token", e);
 
 		}

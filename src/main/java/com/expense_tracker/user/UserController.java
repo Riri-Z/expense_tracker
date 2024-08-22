@@ -65,4 +65,5 @@ public class UserController {
 			throw new UsernameNotFoundException("Invalid user request!");
 		}
 	}
+
 }
