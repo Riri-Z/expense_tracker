@@ -65,18 +65,4 @@ public class UserController {
 			throw new UsernameNotFoundException("Invalid user request!");
 		}
 	}
-
-	/*
-	 * public UserController(UserService service) { this.service = service; }
-	 *
-	 * @GetMapping("/user") public ResponseEntity<?> getUser(@RequestParam Long id) { try
-	 * { Optional<UserModel> result = service.findUser(id); if (result.isPresent()) {
-	 * return ResponseEntity.ok(result.get()); } else { return
-	 * ResponseEntity.status(HttpStatus.NOT_FOUND).body("User with id " + id +
-	 * " not found"); } } catch (Exception e) {
-	 *
-	 * return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-	 * .body("An error occurred while fetching the user: " + e.getMessage()); } }
-	 */
-
 }

@@ -21,9 +21,10 @@ import com.expense_tracker.jwt.JwtAuthFilter;
 import com.expense_tracker.user.UserInfoService;
 
 @Configuration
-@EnableWebSecurity
 @EnableMethodSecurity
+@EnableWebSecurity(debug = true)
 public class SecurityConfig {
+
 
 	private final UserInfoService userInfoService;
 
@@ -40,26 +41,27 @@ public class SecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter authFilter,
 			AuthenticationProvider authenticationProvider) throws Exception {
 		return http.csrf(csrf -> csrf.disable()) // disable for stateless apis
-			.authorizeHttpRequests(
-					auth -> auth.requestMatchers("/auth/welcome", "/auth/addNewUser", "/auth/generateToken")
-						.permitAll()
-						.requestMatchers("/auth/user/**")
-						.hasAuthority("ROLE_USER")
-						.requestMatchers("/auth/admin/**")
-						.hasAuthority("ROLE_ADMIN")
-						.anyRequest()
-						.authenticated() // Protect all other endpoints
+				.authorizeHttpRequests(
+						auth -> auth
+								.requestMatchers("/auth/welcome", "/auth/addNewUser", "/auth/generateToken")
+								.permitAll()
+								.requestMatchers("/auth/user/**")
+								.hasAuthority("ROLE_USER")
+								.requestMatchers("/auth/admin/**")
+								.hasAuthority("ROLE_ADMIN")
+								.anyRequest()
+								.authenticated() // Protect all other endpoints
 
-			)
-			// No sessions
-			.sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+				)
+				// No sessions
+				.sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 
-			)
-			// Custom authentication provider
-			.authenticationProvider(authenticationProvider)
-			// Add JWT filter
-			.addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
-			.build();
+				)
+				// Custom authentication provider
+				.authenticationProvider(authenticationProvider)
+				// Add JWT filter
+				.addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
+				.build();
 	}
 
 	@Bean

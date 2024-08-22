@@ -24,8 +24,8 @@ public class UserInfoDetails implements UserDetails {
 		this.password = userInfo.getPassword();
 		this.authorities = List.of(userInfo.getRoles().split(","))
 			.stream()
-			.map(SimpleGrantedAuthority::new) // equivalent to role -> new
-												// SimpleGrantedAuthority(role)
+			// equivalent to role -> newSimpleGrantedAuthority(role)
+			.map(SimpleGrantedAuthority::new)
 			.collect(Collectors.toList());
 	}
 
