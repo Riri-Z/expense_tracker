@@ -1,4 +1,4 @@
-package com.expense_tracker.user;
+package com.expense_tracker.user.service;
 
 import java.util.Collection;
 import java.util.List;
@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import com.expense_tracker.user.entity.UserInfo;
 
 public class UserInfoDetails implements UserDetails {
 

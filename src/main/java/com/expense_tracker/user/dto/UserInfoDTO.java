@@ -1,4 +1,4 @@
-package com.expense_tracker.user;
+package com.expense_tracker.user.dto;
 
 public class UserInfoDTO {
 

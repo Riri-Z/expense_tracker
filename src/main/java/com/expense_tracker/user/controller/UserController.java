@@ -1,4 +1,4 @@
-package com.expense_tracker.user;
+package com.expense_tracker.user.controller;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,8 +13,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.expense_tracker.jwt.JwtService;
 import com.expense_tracker.security.AuthRequest;
+import com.expense_tracker.user.dto.UserInfoDTO;
+import com.expense_tracker.user.entity.UserInfo;
+import com.expense_tracker.user.service.UserInfoService;
 
 import jakarta.validation.Valid;
+
 
 @RestController
 @RequestMapping("/auth")
@@ -39,6 +43,13 @@ public class UserController {
 		return "Welcome this endpoint is not secure";
 	}
 
+/* 	@PutMapping("user/{id}")
+	public String updateUser(@PathVariable String id, @RequestBody Optional<UserInfo> userInfo) {
+		// TODO: process PUT request
+		// send to service
+		return service.updateUser(userInfo);
+	} */
+
 	@PostMapping("/addNewUser")
 	public UserInfoDTO addNewUser(@Valid @RequestBody UserInfo userInfo) {
 		return service.addUser(userInfo);
@@ -62,8 +73,7 @@ public class UserController {
 				new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
 		if (authentication.isAuthenticated()) {
 			return jwtService.generateToken(authRequest.getUsername());
-		}
-		else {
+		} else {
 			throw new UsernameNotFoundException("Invalid user request!");
 		}
 	}
