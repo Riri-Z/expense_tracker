@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.expense_tracker.jwt.JwtService;
 import com.expense_tracker.security.AuthRequest;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/auth")
 public class UserController {
@@ -38,7 +40,7 @@ public class UserController {
 	}
 
 	@PostMapping("/addNewUser")
-	public String addNewUser(@RequestBody UserInfo userInfo) {
+	public UserInfoDTO addNewUser(@Valid @RequestBody UserInfo userInfo) {
 		return service.addUser(userInfo);
 	}
 
