@@ -1,24 +1,29 @@
 package com.expense_tracker.user.controller;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.expense_tracker.jwt.JwtService;
 import com.expense_tracker.security.AuthRequest;
+import com.expense_tracker.user.dto.UpdateUserDTO;
 import com.expense_tracker.user.dto.UserInfoDTO;
 import com.expense_tracker.user.entity.UserInfo;
 import com.expense_tracker.user.service.UserInfoService;
 
 import jakarta.validation.Valid;
-
 
 @RestController
 @RequestMapping("/auth")
@@ -43,16 +48,22 @@ public class UserController {
 		return "Welcome this endpoint is not secure";
 	}
 
-/* 	@PutMapping("user/{id}")
-	public String updateUser(@PathVariable String id, @RequestBody Optional<UserInfo> userInfo) {
-		// TODO: process PUT request
-		// send to service
-		return service.updateUser(userInfo);
-	} */
+	@PutMapping("user/{id}")
+	@PreAuthorize("hasAuthority('ROLE_USER','ROLE_ADMIN')")
+	public ResponseEntity<UserInfoDTO> updateUser(@PathVariable Long id, @RequestBody UpdateUserDTO updateUserDTO) {
+		try {
+			UserInfoDTO updatedUser = service.updateUser(id, updateUserDTO);
+			return ResponseEntity.ok(updatedUser);
+		} catch (Exception e) {
+			System.out.println(e);
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 
 	@PostMapping("/addNewUser")
-	public UserInfoDTO addNewUser(@Valid @RequestBody UserInfo userInfo) {
-		return service.addUser(userInfo);
+	public ResponseEntity<UserInfoDTO> addNewUser(@Valid @RequestBody UserInfo userInfo) {
+		UserInfoDTO addedUser = service.addUser(userInfo);
+		return ResponseEntity.ok(addedUser);
 	}
 
 	@GetMapping("/user/userProfile")
@@ -68,14 +79,20 @@ public class UserController {
 	}
 
 	@PostMapping("/generateToken")
-	public String authenticateAndGetToken(@RequestBody AuthRequest authRequest) {
-		Authentication authentication = authenticationManager.authenticate(
-				new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
-		if (authentication.isAuthenticated()) {
-			return jwtService.generateToken(authRequest.getUsername());
-		} else {
-			throw new UsernameNotFoundException("Invalid user request!");
+	public ResponseEntity<String> authenticateAndGetToken(@RequestBody AuthRequest authRequest) {
+		try {
+			Authentication authentication = authenticationManager.authenticate(
+					new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
+			if (authentication.isAuthenticated()) {
+				return ResponseEntity.ok(jwtService.generateToken(authRequest.getUsername()));
+			} else {
+				throw new UsernameNotFoundException("Invalid user request!");
+			}
+		} catch (AuthenticationException e) {
+			System.out.println(e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		}
+
 	}
 
 }
