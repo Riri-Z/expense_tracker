@@ -7,6 +7,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,6 +22,7 @@ import com.expense_tracker.security.AuthRequest;
 import com.expense_tracker.user.dto.UpdateUserDTO;
 import com.expense_tracker.user.dto.UserInfoDTO;
 import com.expense_tracker.user.entity.UserInfo;
+import com.expense_tracker.user.repository.UserInfoRepository;
 import com.expense_tracker.user.service.UserInfoService;
 
 import jakarta.validation.Valid;
@@ -35,12 +37,15 @@ public class UserController {
 
 	private final AuthenticationManager authenticationManager;
 
-	public UserController(UserInfoService service, JwtService jwtService, AuthenticationManager authenticationManager) {
+	private final UserInfoRepository userInfoRepository;
+
+	public UserController(UserInfoService service, JwtService jwtService, AuthenticationManager authenticationManager,
+			UserInfoRepository userInfoRepository) {
 
 		this.service = service;
 		this.jwtService = jwtService;
 		this.authenticationManager = authenticationManager;
-
+		this.userInfoRepository = userInfoRepository;
 	}
 
 	@GetMapping("/welcome")
@@ -49,12 +54,13 @@ public class UserController {
 	}
 
 	@PutMapping("user/{id}")
-	@PreAuthorize("hasAuthority('ROLE_USER','ROLE_ADMIN')")
+	// @PreAuthorize("hasAuthority('ROLE_USER','ROLE_ADMIN')")
 	public ResponseEntity<UserInfoDTO> updateUser(@PathVariable Long id, @RequestBody UpdateUserDTO updateUserDTO) {
 		try {
 			UserInfoDTO updatedUser = service.updateUser(id, updateUserDTO);
 			return ResponseEntity.ok(updatedUser);
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			System.out.println(e);
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -84,11 +90,20 @@ public class UserController {
 			Authentication authentication = authenticationManager.authenticate(
 					new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
 			if (authentication.isAuthenticated()) {
-				return ResponseEntity.ok(jwtService.generateToken(authRequest.getUsername()));
-			} else {
+				// get authentified user
+				UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
+				// get user from bdd
+				UserInfo userInfo = userInfoRepository.findByUsername(userDetails.getUsername())
+					.orElseThrow(() -> new UsernameNotFoundException("User not found: " + userDetails.getUsername()));
+				String idUser = String.valueOf((userInfo.getId()));
+				return ResponseEntity.ok(jwtService.generateToken(idUser));
+			}
+			else {
 				throw new UsernameNotFoundException("Invalid user request!");
 			}
-		} catch (AuthenticationException e) {
+		}
+		catch (AuthenticationException e) {
 			System.out.println(e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		}
