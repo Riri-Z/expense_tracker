@@ -35,4 +35,4 @@ build/
 application-*.properties
 
 ### LOG ###
-spring.log
+spring.log*
