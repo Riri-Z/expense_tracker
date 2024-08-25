@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import com.expense_tracker.user.service.UserInfoDetails;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -82,11 +84,19 @@ public class JwtService {
 
 	// Validate the token against user details and expiration
 	public Boolean validateToken(String token, UserDetails userDetails) {
-		final String username = extractId(token);
-		boolean usernameMatches = username.equals(userDetails.getUsername());
+        final String userIdFromToken = extractId(token);
+		String userIdFromUserDetails = "";
+
+		if (userDetails instanceof UserInfoDetails userInfoDetails) {
+            userIdFromUserDetails = String.valueOf(userInfoDetails.getId());
+        } else {
+            throw new IllegalArgumentException("UserDetails must be an instance of userInfoDetails");
+        }
+
+        boolean userIdMatches = userIdFromToken.equals(userIdFromUserDetails);
 		boolean tokenNotExpired = !isTokenExpired(token);
 
-		return usernameMatches && tokenNotExpired;
+		return userIdMatches && tokenNotExpired;
 	}
 
 }

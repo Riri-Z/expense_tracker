@@ -12,6 +12,8 @@ import com.expense_tracker.user.entity.UserInfo;
 
 public class UserInfoDetails implements UserDetails {
 
+	private final Long id;
+
 	private final String name;
 
 	private final String username;
@@ -21,6 +23,7 @@ public class UserInfoDetails implements UserDetails {
 	private final List<GrantedAuthority> authorities;
 
 	public UserInfoDetails(UserInfo userInfo) {
+		this.id = userInfo.getId();
 		this.name = userInfo.getName();
 		this.username = userInfo.getUsername();
 		this.password = userInfo.getPassword();
@@ -30,6 +33,11 @@ public class UserInfoDetails implements UserDetails {
 			.map(SimpleGrantedAuthority::new)
 			.collect(Collectors.toList());
 	}
+
+
+    public Long getId() {
+        return id;
+    }
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {

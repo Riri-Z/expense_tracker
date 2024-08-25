@@ -2,6 +2,8 @@ package com.expense_tracker.user.service;
 
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -23,6 +25,8 @@ import jakarta.validation.Valid;
 @Service
 public class UserInfoService implements UserDetailsService {
 
+	private static final Logger log = LoggerFactory.getLogger(UserInfoService.class);
+
 	private final UserInfoRepository repository;
 
 	private final PasswordEncoder encoder;
@@ -41,8 +45,15 @@ public class UserInfoService implements UserDetailsService {
 
 		// Converting UserInfo to UserDetails
 		return userDetail.map(UserInfoDetails::new)
-				.orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+			.orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 	}
+
+	public UserDetails loadUserById(Long id) throws UsernameNotFoundException {
+        UserInfo user = repository.findById(id)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + id));
+
+        return new UserInfoDetails(user);
+    }
 
 	@Validated
 	public UserInfoDTO addUser(@Valid UserInfo userInfo) {
@@ -75,50 +86,37 @@ public class UserInfoService implements UserDetailsService {
 	}
 
 	public UserInfoDTO updateUser(Long id, UpdateUserDTO updateUserDTO) {
-		// TODO : check why UserNotFoundException return a status 200 with empty body.
-		// and why id 6 is not found
-		/*
-		 * ui1_0.username=?
-		 * 2024-08-25T05:34:58.216+02:00 ERROR 20776 --- [fitness_api] [nio-8080-exec-1]
-		 * com.expense_tracker.jwt.JwtAuthFilter : Error processing JWT token
-		 *
-		 * org.springframework.security.core.userdetails.UsernameNotFoundException: User
-		 * not found: zaza
-		 * at
-		 * com.expense_tracker.user.service.UserInfoService.lambda$loadUserByUsername$0(
-		 * UserInfoService.java:44) ~[classes/:na]
-		 * at java.base/java.util.Optional.orElseThrow(Optional.java:403) ~[na:na]
-		 * at com.expense_tracker.user.service.UserInfoService.loadUserByUsername(
-		 * UserInfoService.java:44) ~[classes/:na]
-		 * at
-		 * com.expense_tracker.jwt.JwtAuthFilter.doFilterInternal(JwtAuthFilter.java:52)
-		 * ~[classes/:na]
-		 * at org.springframework.web.filter.OncePerRequestFilter.doFilter(
-		 * OncePerRequestFilter.java:116) ~[spring-web-6.1.12.jar:6.1.12]
-		 * at org.springframework.security.web.
-		 * ObservationFilterChainDecorator$ObservationFilter.wrapFilter(
-		 * ObservationFilterChainDecorator.java:240)
-		 * ~[spring-security-web-6.3.3.jar:6.3.3]
-		 * at org.springframework.security.web.
-		 * ObservationFilterChainDecorator$ObservationFilter.doFilter(
-		 * ObservationFilterChainDecorator.java:227)
-		 * ~[spring-security-web-6.3.3.jar:6.3.3]
-		 */
+		log.info("Updating user with id: {}", id);
+
 		UserInfo user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id + " not found"));
+
 		// Mise à jour des champs de l'utilisateur
 		if (updateUserDTO.getName() != null) {
 			user.setName(updateUserDTO.getName());
+			log.debug("Updated name for user {}", id);
 		}
 		if (updateUserDTO.getEmail() != null) {
+			validateUniqueEmail(updateUserDTO.getEmail(), id);
 			user.setEmail(updateUserDTO.getEmail());
+			log.debug("Updated email for user {}", id);
 		}
 
-		if (updateUserDTO.getEmail() != null) {
+		if (updateUserDTO.getUsername() != null) {
 			user.setUsername(updateUserDTO.getUsername());
+			log.debug("Updated username for user {}", id);
+
 		}
 
 		UserInfo updaUserInfo = repository.save(user);
+		log.info("Successfully updated user with id: {}", id);
+
 		return userInfoMapper.userInfoToDTO(updaUserInfo);
+	}
+
+	private void validateUniqueEmail(String email, Long excludeUserId) {
+		if (Boolean.TRUE.equals(repository.existsByEmailAndIdNot(email, excludeUserId))) {
+			throw new DuplicateUserException("Email already in use: " + email);
+		}
 	}
 
 }
