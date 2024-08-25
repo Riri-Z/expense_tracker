@@ -59,8 +59,7 @@ public class UserController {
 		try {
 			UserInfoDTO updatedUser = service.updateUser(id, updateUserDTO);
 			return ResponseEntity.ok(updatedUser);
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			System.out.println(e);
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -74,8 +73,15 @@ public class UserController {
 
 	@GetMapping("/user/userProfile")
 	@PreAuthorize("hasAuthority('ROLE_USER')")
-	public String userProfile() {
-		return "Welcome to User Profile";
+	public ResponseEntity<String> userProfile() {
+		try {
+
+			return ResponseEntity.ok("Welcome to User Profile");
+		} catch (Exception e) {
+			System.out.println(e);
+
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
 	}
 
 	@GetMapping("/admin/adminProfile")
@@ -95,15 +101,14 @@ public class UserController {
 
 				// get user from bdd
 				UserInfo userInfo = userInfoRepository.findByUsername(userDetails.getUsername())
-					.orElseThrow(() -> new UsernameNotFoundException("User not found: " + userDetails.getUsername()));
+						.orElseThrow(
+								() -> new UsernameNotFoundException("User not found: " + userDetails.getUsername()));
 				String idUser = String.valueOf((userInfo.getId()));
 				return ResponseEntity.ok(jwtService.generateToken(idUser));
-			}
-			else {
+			} else {
 				throw new UsernameNotFoundException("Invalid user request!");
 			}
-		}
-		catch (AuthenticationException e) {
+		} catch (AuthenticationException e) {
 			System.out.println(e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		}
