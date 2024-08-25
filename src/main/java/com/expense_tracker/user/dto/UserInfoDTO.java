@@ -2,7 +2,7 @@ package com.expense_tracker.user.dto;
 
 public class UserInfoDTO {
 
-	private long id;
+	private Long id;
 
 	private String name;
 
@@ -11,6 +11,9 @@ public class UserInfoDTO {
 	private String email;
 
 	private String roles;
+
+	public UserInfoDTO() {
+	}
 
 	public UserInfoDTO(long id, String name, String username, String email, String roles) {
 		this.id = id;
