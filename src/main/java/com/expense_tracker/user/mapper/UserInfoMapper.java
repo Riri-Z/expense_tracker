@@ -1,6 +1,9 @@
-package com.expense_tracker.user;
+package com.expense_tracker.user.mapper;
 
 import org.springframework.stereotype.Component;
+
+import com.expense_tracker.user.dto.UserInfoDTO;
+import com.expense_tracker.user.entity.UserInfo;
 
 @Component
 public class UserInfoMapper {

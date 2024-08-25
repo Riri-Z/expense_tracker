@@ -9,7 +9,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.expense_tracker.user.UserInfoService;
+import com.expense_tracker.user.service.UserInfoService;
 
 import io.jsonwebtoken.io.IOException;
 import jakarta.servlet.FilterChain;

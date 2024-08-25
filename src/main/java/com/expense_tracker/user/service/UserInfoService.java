@@ -1,4 +1,4 @@
-package com.expense_tracker.user;
+package com.expense_tracker.user.service;
 
 import java.util.Optional;
 
@@ -11,6 +11,10 @@ import org.springframework.validation.annotation.Validated;
 
 import com.expense_tracker.exception.user.DuplicateUserException;
 import com.expense_tracker.exception.user.UserException;
+import com.expense_tracker.user.dto.UserInfoDTO;
+import com.expense_tracker.user.entity.UserInfo;
+import com.expense_tracker.user.mapper.UserInfoMapper;
+import com.expense_tracker.user.repository.UserInfoRepository;
 
 import jakarta.validation.Valid;
 
@@ -27,7 +31,6 @@ public class UserInfoService implements UserDetailsService {
 		this.repository = repository;
 		this.encoder = encoder;
 		this.userInfoMapper = userInfoMapper;
-
 	}
 
 	@Override

@@ -1,4 +1,4 @@
-package com.expense_tracker.user;
+package com.expense_tracker.user.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

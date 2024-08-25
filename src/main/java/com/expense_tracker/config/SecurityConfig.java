@@ -18,7 +18,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.expense_tracker.jwt.JwtAuthFilter;
-import com.expense_tracker.user.UserInfoService;
+import com.expense_tracker.user.service.UserInfoService;
 
 @Configuration
 @EnableMethodSecurity
