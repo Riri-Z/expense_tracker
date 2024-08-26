@@ -1,0 +1,77 @@
+package com.expense_tracker.subscription.entity;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+import com.expense_tracker.common.entity.BaseEntity;
+import com.expense_tracker.subscription.enums.BillingCycle;
+import com.expense_tracker.subscription.enums.SubscriptionStatus;
+import com.expense_tracker.user.entity.UserInfo;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@Entity
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class UserSubscription extends BaseEntity {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+
+	@NotNull
+	@NotBlank
+	@Column(name = "name")
+	private String name;
+
+	@NotNull
+	@NotBlank
+	@Column(name = "subscription_start_date")
+	private LocalDate subscriptionStartDate;
+
+	@NotNull
+	@NotBlank
+	@Column(name = "subscription_end_date")
+	private LocalDate subscriptionEndDate;
+
+	@NotNull
+	@Column(name = "renewal_date")
+	private LocalDate renewalDate;
+
+	@NotNull
+	@Column(name = "amount")
+	private BigDecimal amount;
+
+	@NotNull
+	@NotBlank
+	@Enumerated(EnumType.STRING)
+	@Column(name = "billing_cycle")
+	private BillingCycle billingCycle; // 'monthly', 'yearly'
+
+	@NotNull
+	@NotBlank
+	@Enumerated(EnumType.STRING)
+	@Column(name = "status")
+	private SubscriptionStatus status; // 'cancelled', 'paused'
+
+	@ManyToOne
+	@JoinColumn(name = "user_id")
+	private UserInfo user;
+
+	@ManyToOne
+	@JoinColumn(name = "subscription_id")
+	private Subscription subscription;
+
+}

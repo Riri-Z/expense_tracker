@@ -1,5 +1,5 @@
 package com.expense_tracker.subscription.service;
 
-public class SubscriptionService {
+public class Subscription {
 
 }
