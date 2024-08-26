@@ -1,17 +1,16 @@
 package com.expense_tracker.user.entity;
 
-import java.time.Instant;
-
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import java.util.List;
 
 import com.expense_tracker.common.entity.BaseEntity;
+import com.expense_tracker.subscription.entity.UserSubscription;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -53,10 +52,7 @@ public class UserInfo extends BaseEntity {
 	// Enum
 	private String roles;
 
-	@CreationTimestamp
-	private Instant createdOn;
-
-	@UpdateTimestamp
-	private Instant updatedOn;
+	@OneToMany(mappedBy = "user")
+	private List<UserSubscription> userSubscriptions;
 
 }
