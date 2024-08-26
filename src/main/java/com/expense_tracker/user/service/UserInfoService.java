@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import com.expense_tracker.exception.user.DuplicateUserException;
+import com.expense_tracker.exception.user.MissMatchedPasswordException;
 import com.expense_tracker.exception.user.UserNotFoundException;
 import com.expense_tracker.user.dto.UpdateUserDTO;
 import com.expense_tracker.user.dto.UserInfoDTO;
@@ -78,6 +79,32 @@ public class UserInfoService implements UserDetailsService {
 		return userInfoMapper.userInfoToDTO(savedUser);
 	}
 
+	public boolean deleteUser(Long id) {
+		log.info("Start Deleting user with id: {}", id);
+
+		boolean userExist = repository.existsById(id);
+		log.info("user find with id: {}", id);
+
+		if (!userExist) {
+			log.warn("user missing with id: {}", id);
+
+			throw new UserNotFoundException("User with the following " + id + " doesn't exist");
+		}
+
+		try {
+			log.warn("deleting user with id: {}", id);
+
+			repository.deleteById(id);
+			log.info("SUCCESS delete id: {}", id);
+
+			return true;
+		}
+		catch (Exception ex) {
+			log.error("Failed deleting the following user id  : " + id);
+			return false;
+		}
+	}
+
 	@Validated
 	public UserInfoDTO updateUser(@Valid Long id, UpdateUserDTO updateUserDTO) {
 		log.info("Updating user with updateUserDTO: {}", updateUserDTO);
@@ -107,6 +134,24 @@ public class UserInfoService implements UserDetailsService {
 		log.info("Successfully updated user with id: {}", id);
 
 		return userInfoMapper.userInfoToDTO(updaUserInfo);
+	}
+
+	public boolean updatePassword(Long id, String oldPassword, String newPassword) throws MissMatchedPasswordException {
+
+		// Get user from bdd
+		UserInfo userInfo = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id + " not found"));
+		// Get encoded password from userInfo
+		String encodedPassword = userInfo.getPassword();
+		// Verify if old password is correct
+		boolean isUserProvidedOldPassworCorrect = encoder.matches(oldPassword, encodedPassword);
+		// if mismatch, throw exception
+		if (!isUserProvidedOldPassworCorrect) {
+			throw new MissMatchedPasswordException("Old password provided is incorrect");
+		}
+		// Save encoded new password
+		userInfo.setPassword(encoder.encode(newPassword));
+
+		return true;
 	}
 
 	private void validateUniqueEmail(String email, Long excludeUserId) {
