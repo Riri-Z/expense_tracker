@@ -65,7 +65,7 @@ public class UserInfoService implements UserDetailsService {
 		UserFieldValidator.validateUserFields(userInfo.getPassword(), "Password");
 		UserFieldValidator.validateUserFields(userInfo.getRoles(), "Roles");
 
-		// Vérifications d'unicité
+		// check unicity
 		if (Boolean.TRUE.equals(repository.existsByEmail(userInfo.getEmail()))) {
 			throw new DuplicateUserException("Email already exists :" + userInfo.getEmail());
 		}
@@ -130,10 +130,10 @@ public class UserInfoService implements UserDetailsService {
 
 		}
 
-		UserInfo updaUserInfo = repository.save(user);
+		UserInfo updateUserInfo = repository.save(user);
 		log.info("Successfully updated user with id: {}", id);
 
-		return userInfoMapper.userInfoToDTO(updaUserInfo);
+		return userInfoMapper.userInfoToDTO(updateUserInfo);
 	}
 
 	public boolean updatePassword(Long id, String oldPassword, String newPassword) throws MissMatchedPasswordException {
@@ -150,6 +150,8 @@ public class UserInfoService implements UserDetailsService {
 		}
 		// Save encoded new password
 		userInfo.setPassword(encoder.encode(newPassword));
+		repository.save(userInfo);
+		log.info("Successfully updated password for user with id: {}", id);
 
 		return true;
 	}
