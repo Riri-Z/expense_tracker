@@ -8,12 +8,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,8 +23,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.expense_tracker.exception.user.UserAccessDenied;
+import com.expense_tracker.exception.user.UserNotFoundException;
 import com.expense_tracker.jwt.JwtService;
 import com.expense_tracker.security.AuthRequest;
+import com.expense_tracker.user.dto.UpdatePasswordDTO;
 import com.expense_tracker.user.dto.UpdateUserDTO;
 import com.expense_tracker.user.dto.UserInfoDTO;
 import com.expense_tracker.user.entity.UserInfo;
@@ -91,17 +95,39 @@ public class UserController {
 
 	}
 
+	/**
+	 * PUT /user/password/{id} : Update the password of the user with the given id, and
+	 * new passord and old password in the request body
+	 * @param id
+	 * @param entity
+	 * @return
+	 */
+	@PostMapping("user/update-password")
+	public ResponseEntity<String> updatePassword(@AuthenticationPrincipal UserInfoDetails userInfoDetails,
+			@Valid @RequestBody UpdatePasswordDTO request) {
+
+		service.updatePassword(userInfoDetails.getId(), request.getOldPassword(), request.getNewPassword());
+		return ResponseEntity.ok("Password updated successfully");
+
+	}
+
 	@PostMapping("/addNewUser")
 	public ResponseEntity<UserInfoDTO> addNewUser(@Valid @RequestBody UserInfo userInfo) {
 		UserInfoDTO addedUser = service.addUser(userInfo);
 		return ResponseEntity.ok(addedUser);
 	}
 
+	@DeleteMapping("user/delete")
+	public ResponseEntity<String> deleteUser(@AuthenticationPrincipal UserInfoDetails userInfoDetails) {
+		Long id = userInfoDetails.getId();
+		service.deleteUser(id);
+		return ResponseEntity.ok("User with id : " + id + " was deleted ");
+	}
+
 	@GetMapping("/user/userProfile")
 	@PreAuthorize("hasAuthority('ROLE_USER')")
 	public ResponseEntity<String> userProfile() {
 		try {
-
 			return ResponseEntity.ok("Welcome to User Profile");
 		}
 		catch (Exception e) {
@@ -120,27 +146,27 @@ public class UserController {
 	@PostMapping("/generateToken")
 	public ResponseEntity<String> authenticateAndGetToken(@RequestBody AuthRequest authRequest) {
 		try {
+
 			Authentication authentication = authenticationManager.authenticate(
 					new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
+
 			if (authentication.isAuthenticated()) {
 				// get authentified user
 				UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
 				// get user from bdd
 				UserInfo userInfo = userInfoRepository.findByUsername(userDetails.getUsername())
-					.orElseThrow(() -> new UsernameNotFoundException("User not found: " + userDetails.getUsername()));
+					.orElseThrow(() -> new UserNotFoundException("User not found: " + userDetails.getUsername()));
 				String idUser = String.valueOf((userInfo.getId()));
 				return ResponseEntity.ok(jwtService.generateToken(idUser));
 			}
 			else {
-				throw new UsernameNotFoundException("Invalid user request!");
+				throw new UserAccessDenied("Cannot generate token");
 			}
 		}
-		catch (AuthenticationException e) {
-			System.out.println(e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		catch (InternalAuthenticationServiceException e) {
+			throw new UserAccessDenied("Cannot generate token");
 		}
-
 	}
 
 }
