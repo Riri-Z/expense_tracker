@@ -48,6 +48,14 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
 	}
 
+	@ExceptionHandler(IllegalArgumentException.class)
+	public ResponseEntity<ErrorResponse> handlerIllegalArgumentException(IllegalArgumentException ex) {
+		ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Invalid input provided",
+				ex.getMessage());
+
+		return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+	}
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ErrorResponse> handlerMethodValidationException(MethodArgumentNotValidException ex) {
 		// Init a map to store all validation exception
