@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import com.expense_tracker.exception.user.DuplicateUserException;
+import com.expense_tracker.exception.user.MissMatchedPasswordException;
 import com.expense_tracker.exception.user.UserAccessDenied;
 import com.expense_tracker.exception.user.UserException;
 import com.expense_tracker.exception.user.UserNotFoundException;
@@ -92,12 +94,17 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
 	}
 
-	@ExceptionHandler(Exception.class)
-	public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-		logg.error("Unexpected error occurred: ", ex);
-		ErrorResponse error = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal Server Error",
-				"An unexpected error occurred");
-		return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+	@ExceptionHandler(MissMatchedPasswordException.class)
+	public ResponseEntity<ErrorResponse> handleMissMatchedPasswordException(MissMatchedPasswordException ex) {
+		ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Wrong old password", ex.getMessage());
+		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+	}
+
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+		ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Invalid JSON",
+				"The provided JSON is not valid or is malformed");
+		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
 	}
 
 	@ExceptionHandler(UserException.class)
