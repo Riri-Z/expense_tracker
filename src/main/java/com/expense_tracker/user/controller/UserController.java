@@ -1,5 +1,9 @@
 package com.expense_tracker.user.controller;
 
+import java.nio.file.AccessDeniedException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -7,6 +11,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +28,7 @@ import com.expense_tracker.user.dto.UpdateUserDTO;
 import com.expense_tracker.user.dto.UserInfoDTO;
 import com.expense_tracker.user.entity.UserInfo;
 import com.expense_tracker.user.repository.UserInfoRepository;
+import com.expense_tracker.user.service.UserInfoDetails;
 import com.expense_tracker.user.service.UserInfoService;
 
 import jakarta.validation.Valid;
@@ -30,6 +36,8 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/auth")
 public class UserController {
+
+	private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
 	private final UserInfoService service;
 
@@ -55,14 +63,32 @@ public class UserController {
 
 	@PutMapping("user/{id}")
 	// @PreAuthorize("hasAuthority('ROLE_USER','ROLE_ADMIN')")
-	public ResponseEntity<UserInfoDTO> updateUser(@PathVariable Long id, @RequestBody UpdateUserDTO updateUserDTO) {
-		try {
-			UserInfoDTO updatedUser = service.updateUser(id, updateUserDTO);
-			return ResponseEntity.ok(updatedUser);
-		} catch (Exception e) {
-			System.out.println(e);
-			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+	public ResponseEntity<UserInfoDTO> updateUser(@PathVariable Long id, @RequestBody UpdateUserDTO updateUserDTO)
+			throws AccessDeniedException {
+		logger.info("Entering updateUser method for id: {}", id);
+
+		// check if id from jwt == id in path
+		// get auth fronm spring context
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+		// Verify if user is authentified
+		if (authentication == null || !authentication.isAuthenticated()) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
+
+		// get userDetails
+		UserInfoDetails userDetails = (UserInfoDetails) authentication.getPrincipal();
+		Long userIdFromJwt = userDetails.getId();
+
+		// Check if id from jwt is equals id from path
+		if (!userIdFromJwt.equals(id)) {
+			logger.warn("Access denied for user {} trying to update user {}", userIdFromJwt, id);
+			throw new AccessDeniedException("You are not authorized to update this user");
+		}
+
+		UserInfoDTO updatedUser = service.updateUser(id, updateUserDTO);
+		return ResponseEntity.ok(updatedUser);
+
 	}
 
 	@PostMapping("/addNewUser")
@@ -77,7 +103,8 @@ public class UserController {
 		try {
 
 			return ResponseEntity.ok("Welcome to User Profile");
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			System.out.println(e);
 
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -101,14 +128,15 @@ public class UserController {
 
 				// get user from bdd
 				UserInfo userInfo = userInfoRepository.findByUsername(userDetails.getUsername())
-						.orElseThrow(
-								() -> new UsernameNotFoundException("User not found: " + userDetails.getUsername()));
+					.orElseThrow(() -> new UsernameNotFoundException("User not found: " + userDetails.getUsername()));
 				String idUser = String.valueOf((userInfo.getId()));
 				return ResponseEntity.ok(jwtService.generateToken(idUser));
-			} else {
+			}
+			else {
 				throw new UsernameNotFoundException("Invalid user request!");
 			}
-		} catch (AuthenticationException e) {
+		}
+		catch (AuthenticationException e) {
 			System.out.println(e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		}
