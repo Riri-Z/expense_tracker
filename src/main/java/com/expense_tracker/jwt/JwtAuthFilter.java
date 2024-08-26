@@ -44,7 +44,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
 				token = authHeader.substring(7); // Extract token
 				id = jwtService.extractId(token); // Extract id from
-														// token
+													// token
 			}
 			// If the token is valid and no authentication is set in the context
 			if (id != null && SecurityContextHolder.getContext().getAuthentication() == null) {

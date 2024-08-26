@@ -6,19 +6,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import com.expense_tracker.exception.user.DuplicateUserException;
-import com.expense_tracker.exception.user.UserException;
 import com.expense_tracker.exception.user.UserNotFoundException;
 import com.expense_tracker.user.dto.UpdateUserDTO;
 import com.expense_tracker.user.dto.UserInfoDTO;
 import com.expense_tracker.user.entity.UserInfo;
 import com.expense_tracker.user.mapper.UserInfoMapper;
 import com.expense_tracker.user.repository.UserInfoRepository;
+import com.expense_tracker.user.utils.UserFieldValidator;
 
 import jakarta.validation.Valid;
 
@@ -40,36 +39,30 @@ public class UserInfoService implements UserDetailsService {
 	}
 
 	@Override
-	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+	public UserDetails loadUserByUsername(String username) throws UserNotFoundException {
 		Optional<UserInfo> userDetail = repository.findByUsername(username);
 
 		// Converting UserInfo to UserDetails
 		return userDetail.map(UserInfoDetails::new)
-			.orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+			.orElseThrow(() -> new UserNotFoundException("User not found: " + username));
 	}
 
-	public UserDetails loadUserById(Long id) throws UsernameNotFoundException {
-        UserInfo user = repository.findById(id)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + id));
+	public UserDetails loadUserById(Long id) throws UserNotFoundException {
+		UserInfo user = repository.findById(id)
+			.orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
 
-        return new UserInfoDetails(user);
-    }
+		return new UserInfoDetails(user);
+	}
 
 	@Validated
 	public UserInfoDTO addUser(@Valid UserInfo userInfo) {
 		// verify if username or email already exist
-		if (userInfo.getEmail() == null || userInfo.getEmail().trim().isEmpty()) {
-			throw new UserException("Email cannot be empty");
-		}
-		if (userInfo.getUsername() == null || userInfo.getUsername().trim().isEmpty()) {
-			throw new UserException("Username cannot be empty");
-		}
-		if (userInfo.getPassword() == null || userInfo.getPassword().trim().isEmpty()) {
-			throw new UserException("Password cannot be empty");
-		}
-		if (userInfo.getRoles() == null || userInfo.getRoles().trim().isEmpty()) {
-			throw new UserException("Roles cannot be empty");
-		}
+
+		UserFieldValidator.validateUserFields(userInfo.getName(), "Name");
+		UserFieldValidator.validateUserFields(userInfo.getEmail(), "Email");
+		UserFieldValidator.validateUserFields(userInfo.getUsername(), "Username");
+		UserFieldValidator.validateUserFields(userInfo.getPassword(), "Password");
+		UserFieldValidator.validateUserFields(userInfo.getRoles(), "Roles");
 
 		// Vérifications d'unicité
 		if (Boolean.TRUE.equals(repository.existsByEmail(userInfo.getEmail()))) {
@@ -85,23 +78,26 @@ public class UserInfoService implements UserDetailsService {
 		return userInfoMapper.userInfoToDTO(savedUser);
 	}
 
-	public UserInfoDTO updateUser(Long id, UpdateUserDTO updateUserDTO) {
-		log.info("Updating user with id: {}", id);
+	@Validated
+	public UserInfoDTO updateUser(@Valid Long id, UpdateUserDTO updateUserDTO) {
+		log.info("Updating user with updateUserDTO: {}", updateUserDTO);
 
 		UserInfo user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id + " not found"));
-
+		UserFieldValidator.validateUserFields(updateUserDTO.getName(), "Name");
+		UserFieldValidator.validateUserFields(updateUserDTO.getEmail(), "Email");
+		UserFieldValidator.validateUserFields(updateUserDTO.getUsername(), "Username");
 		// Mise à jour des champs de l'utilisateur
-		if (updateUserDTO.getName() != null) {
+		if (updateUserDTO.getName() != null && !updateUserDTO.getName().trim().isEmpty()) {
 			user.setName(updateUserDTO.getName());
 			log.debug("Updated name for user {}", id);
 		}
-		if (updateUserDTO.getEmail() != null) {
+		if (updateUserDTO.getEmail() != null && !updateUserDTO.getEmail().trim().isEmpty()) {
 			validateUniqueEmail(updateUserDTO.getEmail(), id);
 			user.setEmail(updateUserDTO.getEmail());
 			log.debug("Updated email for user {}", id);
 		}
 
-		if (updateUserDTO.getUsername() != null) {
+		if (updateUserDTO.getUsername() != null && !updateUserDTO.getUsername().trim().isEmpty()) {
 			user.setUsername(updateUserDTO.getUsername());
 			log.debug("Updated username for user {}", id);
 

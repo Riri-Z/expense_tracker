@@ -56,7 +56,7 @@ public class JwtService {
 		return Keys.hmacShaKeyFor(keyBytes);
 	}
 
-	// Extract the username from the token
+	// Extract the id from the token
 	public String extractId(String token) {
 		return extractClaim(token, Claims::getSubject);
 	}
@@ -84,16 +84,17 @@ public class JwtService {
 
 	// Validate the token against user details and expiration
 	public Boolean validateToken(String token, UserDetails userDetails) {
-        final String userIdFromToken = extractId(token);
+		final String userIdFromToken = extractId(token);
 		String userIdFromUserDetails = "";
 
 		if (userDetails instanceof UserInfoDetails userInfoDetails) {
-            userIdFromUserDetails = String.valueOf(userInfoDetails.getId());
-        } else {
-            throw new IllegalArgumentException("UserDetails must be an instance of userInfoDetails");
-        }
+			userIdFromUserDetails = String.valueOf(userInfoDetails.getId());
+		}
+		else {
+			throw new IllegalArgumentException("UserDetails must be an instance of userInfoDetails");
+		}
 
-        boolean userIdMatches = userIdFromToken.equals(userIdFromUserDetails);
+		boolean userIdMatches = userIdFromToken.equals(userIdFromUserDetails);
 		boolean tokenNotExpired = !isTokenExpired(token);
 
 		return userIdMatches && tokenNotExpired;
