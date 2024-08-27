@@ -33,19 +33,21 @@ public class JwtService {
 	}
 
 	// Generate token with given user name
-	public String generateToken(String id) {
+	public String generateToken(String id, String username) {
 		Map<String, Object> claims = new HashMap<>();
+		claims.put("username", username);
+		claims.put("id", id);
 		return createToken(claims, id);
 	}
 
-	// Create a JWT token with specified claims and subject (user name)
+	// Create a JWT token with specified claims and subject (id)
 	private String createToken(Map<String, Object> claims, String id) {
 		return Jwts.builder()
 			.setClaims(claims)
 			.setSubject(id)
 			.setIssuedAt(new Date())
-			// Token valid for 30 minutes
-			.setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30))
+			// Token valid for 60 minutes
+			.setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
 			.signWith(getSignKey(), SignatureAlgorithm.HS256)
 			.compact();
 	}
