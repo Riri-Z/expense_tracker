@@ -1,5 +1,6 @@
 package com.expense_tracker.config;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -14,6 +15,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -27,8 +29,12 @@ public class SecurityConfig {
 
 	private final UserInfoService userInfoService;
 
-	public SecurityConfig(@Lazy UserInfoService userInfoService) {
+	@Qualifier("customAuthenticationEntryPoint")
+	private final AuthenticationEntryPoint authenticationEntryPoint;
+
+	public SecurityConfig(@Lazy UserInfoService userInfoService, AuthenticationEntryPoint authenticationEntryPoint) {
 		this.userInfoService = userInfoService;
+		this.authenticationEntryPoint = authenticationEntryPoint;
 	}
 
 	@Bean
@@ -57,6 +63,7 @@ public class SecurityConfig {
 			.authenticationProvider(authenticationProvider)
 			// Add JWT filter
 			.addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
+			.exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authenticationEntryPoint))
 			.build();
 	}
 
