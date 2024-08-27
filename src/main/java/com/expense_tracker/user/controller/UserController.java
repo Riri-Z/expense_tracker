@@ -158,7 +158,9 @@ public class UserController {
 				UserInfo userInfo = userInfoRepository.findByUsername(userDetails.getUsername())
 					.orElseThrow(() -> new UserNotFoundException("User not found: " + userDetails.getUsername()));
 				String idUser = String.valueOf((userInfo.getId()));
-				return ResponseEntity.ok(jwtService.generateToken(idUser));
+
+				// TODO : ADD COMMENTS to know the flow
+				return ResponseEntity.ok(jwtService.generateToken(idUser, userInfo.getUsername()));
 			}
 			else {
 				throw new UserAccessDenied("Cannot generate token");
