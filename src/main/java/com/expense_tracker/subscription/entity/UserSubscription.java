@@ -17,6 +17,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -31,11 +32,12 @@ public class UserSubscription extends BaseEntity {
 	private Long id;
 
 	@NotNull
-	@Column(name = "subscription_start_date")
+	@Column(name = "subscription_start_date", columnDefinition = "TIMESTAMP")
 	private LocalDate startDate;
 
 	@NotNull
-	@Column(name = "subscription_end_date")
+	@Future
+	@Column(name = "subscription_end_date", columnDefinition = "TIMESTAMP")
 	private LocalDate endDate;
 
 	@NotNull

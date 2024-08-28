@@ -56,7 +56,7 @@ public class UserInfo extends BaseEntity {
 	// would //have only fk_user_id and fk_subscription_id in the junction table so
 	// we handle ourself the junction table with userSubscription entity
 
-	@OneToMany(mappedBy = "user_info")
+	@OneToMany(mappedBy = "userInfo")
 	private List<UserSubscription> userSubscriptions;
 
 }
