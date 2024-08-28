@@ -30,6 +30,6 @@ public class Subscription extends BaseEntity {
 	String description;
 
 	@OneToMany(mappedBy = "subscription")
-	private List<UserSubscription> userSubscriptions;
+	private List<UserSubscription> userSubscription;
 
 }
