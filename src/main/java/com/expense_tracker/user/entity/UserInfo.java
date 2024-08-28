@@ -52,7 +52,7 @@ public class UserInfo extends BaseEntity {
 	// Enum
 	private String roles;
 
-	@OneToMany(mappedBy = "user")
+	@OneToMany(mappedBy = "user_info")
 	private List<UserSubscription> userSubscriptions;
 
 }

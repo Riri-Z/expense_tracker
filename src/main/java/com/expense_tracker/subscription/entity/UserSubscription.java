@@ -67,8 +67,8 @@ public class UserSubscription extends BaseEntity {
 	private SubscriptionStatus status; // 'cancelled', 'paused'
 
 	@ManyToOne
-	@JoinColumn(name = "user_id")
-	private UserInfo user;
+	@JoinColumn(name = "user_info_id")
+	private UserInfo userInfo;
 
 	@ManyToOne
 	@JoinColumn(name = "subscription_id")
