@@ -27,6 +27,8 @@ import com.expense_tracker.exception.user.UserAccessDenied;
 import com.expense_tracker.exception.user.UserNotFoundException;
 import com.expense_tracker.jwt.JwtService;
 import com.expense_tracker.security.AuthRequest;
+import com.expense_tracker.subscription.dto.AddUserSubscriptionDTO;
+import com.expense_tracker.subscription.dto.UserSubscriptionResponseDTO;
 import com.expense_tracker.user.dto.UpdatePasswordDTO;
 import com.expense_tracker.user.dto.UpdateUserDTO;
 import com.expense_tracker.user.dto.UserInfoDTO;
@@ -115,6 +117,18 @@ public class UserController {
 	public ResponseEntity<UserInfoDTO> addNewUser(@Valid @RequestBody UserInfo userInfo) {
 		UserInfoDTO addedUser = service.addUser(userInfo);
 		return ResponseEntity.ok(addedUser);
+	}
+
+	@PostMapping("user/add-subscription")
+	public ResponseEntity<UserSubscriptionResponseDTO> addNewSubscription(
+			@AuthenticationPrincipal @RequestBody AddUserSubscriptionDTO payload) {
+		// get auth fronm spring context
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		UserInfoDetails userDetails = (UserInfoDetails) authentication.getPrincipal();
+
+		Long id = userDetails.getId();
+		UserSubscriptionResponseDTO result = service.addUserSubscription(id, payload);
+		return ResponseEntity.ok(result);
 	}
 
 	@DeleteMapping("user/delete")
