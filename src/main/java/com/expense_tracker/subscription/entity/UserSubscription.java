@@ -17,7 +17,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -32,19 +31,12 @@ public class UserSubscription extends BaseEntity {
 	private Long id;
 
 	@NotNull
-	@NotBlank
-	@Column(name = "name")
-	private String name;
-
-	@NotNull
-	@NotBlank
 	@Column(name = "subscription_start_date")
-	private LocalDate subscriptionStartDate;
+	private LocalDate startDate;
 
 	@NotNull
-	@NotBlank
 	@Column(name = "subscription_end_date")
-	private LocalDate subscriptionEndDate;
+	private LocalDate endDate;
 
 	@NotNull
 	@Column(name = "renewal_date")
@@ -55,16 +47,14 @@ public class UserSubscription extends BaseEntity {
 	private BigDecimal amount;
 
 	@NotNull
-	@NotBlank
 	@Enumerated(EnumType.STRING)
 	@Column(name = "billing_cycle")
-	private BillingCycle billingCycle; // 'monthly', 'yearly'
+	private BillingCycle billingCycle; // 'monthly', 'yearly' etc.
 
 	@NotNull
-	@NotBlank
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status")
-	private SubscriptionStatus status; // 'cancelled', 'paused'
+	private SubscriptionStatus status; // 'active', 'cancelled', 'paused'
 
 	@ManyToOne
 	@JoinColumn(name = "user_info_id")

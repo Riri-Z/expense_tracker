@@ -52,6 +52,10 @@ public class UserInfo extends BaseEntity {
 	// Enum
 	private String roles;
 
+	// here we could have manyToMany to subscription entity directly, but then we
+	// would //have only fk_user_id and fk_subscription_id in the junction table so
+	// we handle ourself the junction table with userSubscription entity
+
 	@OneToMany(mappedBy = "user_info")
 	private List<UserSubscription> userSubscriptions;
 

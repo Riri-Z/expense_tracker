@@ -22,6 +22,7 @@ import com.expense_tracker.exception.user.MissMatchedPasswordException;
 import com.expense_tracker.exception.user.UserAccessDenied;
 import com.expense_tracker.exception.user.UserException;
 import com.expense_tracker.exception.user.UserNotFoundException;
+import com.expense_tracker.exception.userSubscription.UserSubscriptionException;
 
 @ControllerAdvice
 /*
@@ -120,6 +121,13 @@ public class GlobalExceptionHandler {
 		ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "User operation failed",
 				ex.getMessage());
 		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+	}
+
+	@ExceptionHandler(UserSubscriptionException.class)
+	public ResponseEntity<ErrorResponse> handleUserSubscriptionException(UserSubscriptionException ex) {
+		ErrorResponse error = new ErrorResponse(HttpStatus.SERVICE_UNAVAILABLE.value(),
+				"User subscription operation failed", ex.getMessage());
+		return new ResponseEntity<>(error, HttpStatus.SERVICE_UNAVAILABLE);
 	}
 
 }
