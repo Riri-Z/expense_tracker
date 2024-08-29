@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SubscriptionController {
 
 	/*
-	 * private static final Logger logger =
+	 * private static final Logger log =
 	 * LoggerFactory.getLogger(SubscriptionController.class);
 	 *
 	 * private final SubscriptionService service;

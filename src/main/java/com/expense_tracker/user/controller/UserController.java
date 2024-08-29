@@ -1,6 +1,7 @@
 package com.expense_tracker.user.controller;
 
 import java.nio.file.AccessDeniedException;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +44,7 @@ import jakarta.validation.Valid;
 @RequestMapping("/auth")
 public class UserController {
 
-	private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+	private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
 	private final UserInfoService service;
 
@@ -71,7 +72,7 @@ public class UserController {
 	// @PreAuthorize("hasAuthority('ROLE_USER','ROLE_ADMIN')")
 	public ResponseEntity<UserInfoDTO> updateUser(@PathVariable Long id, @RequestBody UpdateUserDTO updateUserDTO)
 			throws AccessDeniedException {
-		logger.info("Entering updateUser method for id: {}", id);
+		log.info("Entering updateUser method for id: {}", id);
 
 		// check if id from jwt == id in path
 		// get auth fronm spring context
@@ -88,7 +89,7 @@ public class UserController {
 
 		// Check if id from jwt is equals id from path
 		if (!userIdFromJwt.equals(id)) {
-			logger.warn("Access denied for user {} trying to update user {}", userIdFromJwt, id);
+			log.warn("Access denied for user {} trying to update user {}", userIdFromJwt, id);
 			throw new AccessDeniedException("You are not authorized to update this user");
 		}
 
@@ -121,7 +122,7 @@ public class UserController {
 
 	@PostMapping("user/add-subscription")
 	public ResponseEntity<UserSubscriptionResponseDTO> addNewSubscription(
-			@AuthenticationPrincipal @RequestBody AddUserSubscriptionDTO payload) {
+			@AuthenticationPrincipal @RequestBody @Valid AddUserSubscriptionDTO payload) {
 		// get auth fronm spring context
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserInfoDetails userDetails = (UserInfoDetails) authentication.getPrincipal();
@@ -158,7 +159,7 @@ public class UserController {
 	}
 
 	@PostMapping("/generateToken")
-	public ResponseEntity<String> authenticateAndGetToken(@RequestBody AuthRequest authRequest) {
+	public ResponseEntity<Map<String, String>> authenticateAndGetToken(@RequestBody @Valid AuthRequest authRequest) {
 		try {
 
 			Authentication authentication = authenticationManager.authenticate(
@@ -172,15 +173,15 @@ public class UserController {
 				UserInfo userInfo = userInfoRepository.findByUsername(userDetails.getUsername())
 					.orElseThrow(() -> new UserNotFoundException("User not found: " + userDetails.getUsername()));
 				String idUser = String.valueOf((userInfo.getId()));
-
-				// TODO : ADD COMMENTS to know the flow
 				return ResponseEntity.ok(jwtService.generateToken(idUser, userInfo.getUsername()));
 			}
 			else {
-				throw new UserAccessDenied("Cannot generate token");
+				throw new UserAccessDenied("Cannot generate token, authentication failed");
 			}
 		}
 		catch (InternalAuthenticationServiceException e) {
+			log.error("Authentication failed for user: {}", authRequest.getUsername(), e);
+
 			throw new UserAccessDenied("Cannot generate token");
 		}
 	}

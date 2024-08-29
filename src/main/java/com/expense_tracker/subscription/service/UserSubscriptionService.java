@@ -13,8 +13,10 @@ import com.expense_tracker.subscription.entity.Subscription;
 import com.expense_tracker.subscription.entity.UserSubscription;
 import com.expense_tracker.subscription.mapper.UserSubscriptionMapper;
 import com.expense_tracker.subscription.repository.UserSubscriptionRepository;
+import com.expense_tracker.user.entity.UserInfo;
 
 import jakarta.transaction.Transactional;
+import jakarta.validation.ConstraintViolationException;
 
 @Service
 public class UserSubscriptionService {
@@ -32,26 +34,33 @@ public class UserSubscriptionService {
 	}
 
 	@Transactional
-	public UserSubscriptionResponseDTO createUserSubscriptionWithNewSubscription(Long userId,
+	public UserSubscriptionResponseDTO createUserSubscriptionWithNewSubscription(UserInfo userInfo,
 			AddUserSubscriptionDTO addUserSubscriptionDTO) {
 		try {
 			log.info("starting adding user subscription with userSubscriptionDTO: {}", addUserSubscriptionDTO);
 
 			SubscriptionDTO subscriptionDTO = UserSubscriptionMapper.toSubscriptionDTO(addUserSubscriptionDTO);
-			Subscription subscription = subscriptionService.addSubscription(subscriptionDTO);
-			log.info("saved new subscription: {}", subscription.getId());
+			Subscription subscription = subscriptionService.getOrCreateSubscription(subscriptionDTO);
+			log.info("saved new subscription id: {}", subscription.getId());
+
+			addUserSubscriptionDTO.setUserInfo(userInfo);
+			addUserSubscriptionDTO.setSubscription(subscription);
 
 			UserSubscriptionDTO userSubscriptionDTO = UserSubscriptionMapper
 				.toUserSubscriptionTDO(addUserSubscriptionDTO);
 
 			UserSubscription userSubscription = addUserSubscription(userSubscriptionDTO);
 			log.info("saved new userSubscription: {}", userSubscription);
-			return new UserSubscriptionResponseDTO(userId, subscription.getId(), userSubscription.getId());
-
+			return new UserSubscriptionResponseDTO(userInfo.getId(), subscription.getId(), userSubscription.getId());
+		}
+		catch (ConstraintViolationException ex) {
+			log.error("Failed createUserSubscriptionWithNewSubscription with addUserSubscriptionDTO: {}",
+					addUserSubscriptionDTO);
+			throw new UserSubscriptionException(ex.getMessage());
 		}
 		catch (Exception ex) {
 			log.error("Failed adding user subscription with addUserSubscriptionDTO: {}", addUserSubscriptionDTO);
-			throw new UserSubscriptionException("Failed operation with the following exception: " + ex.getMessage());
+			throw new UserSubscriptionException(ex.getMessage());
 		}
 	}
 
@@ -59,17 +68,25 @@ public class UserSubscriptionService {
 		try {
 
 			UserSubscription userSubscription = new UserSubscription();
-			userSubscription.setAmount(userSubscriptionDTO.getAmount());
-			userSubscription.setBillingCycle(userSubscriptionDTO.getBillingCycle());
+			userSubscription.setStartDate(userSubscriptionDTO.getStartDate());
 			userSubscription.setEndDate(userSubscriptionDTO.getEndDate());
 			userSubscription.setRenewalDate(userSubscriptionDTO.getRenewalDate());
-			userSubscription.setStartDate(userSubscriptionDTO.getStartDate());
+			userSubscription.setAmount(userSubscriptionDTO.getAmount());
+			userSubscription.setBillingCycle(userSubscriptionDTO.getBillingCycle());
 			userSubscription.setStatus(userSubscriptionDTO.getStatus());
+			userSubscription.setUserInfo(userSubscriptionDTO.getUserInfo());
+			userSubscription.setSubscription(userSubscriptionDTO.getSubscription());
+
 			return userSubscriptionRepository.save(userSubscription);
+		}
+		catch (ConstraintViolationException ex) {
+			log.error("Failed adding user subscription with userSubscriptionDTO: {}, with ex :{}", userSubscriptionDTO,
+					ex.getMessage());
+			throw new UserSubscriptionException(ex.getMessage());
 		}
 		catch (Exception ex) {
 			log.error("Failed adding user subscription with userSubscriptionDTO: {}", userSubscriptionDTO);
-			throw new UserSubscriptionException("Failed operation with the following exception: " + ex.getMessage());
+			throw new UserSubscriptionException(ex.getMessage());
 		}
 	}
 

@@ -13,10 +13,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Entity
 @Data
 @EqualsAndHashCode(callSuper = true)
+@ToString(exclude = "userSubscription")
 public class Subscription extends BaseEntity {
 
 	@Id
@@ -26,8 +28,6 @@ public class Subscription extends BaseEntity {
 	@NotNull
 	@NotBlank
 	String name;
-
-	String description;
 
 	@OneToMany(mappedBy = "subscription")
 	private List<UserSubscription> userSubscription;

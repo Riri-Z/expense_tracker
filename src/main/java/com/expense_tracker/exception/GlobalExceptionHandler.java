@@ -24,6 +24,8 @@ import com.expense_tracker.exception.user.UserException;
 import com.expense_tracker.exception.user.UserNotFoundException;
 import com.expense_tracker.exception.userSubscription.UserSubscriptionException;
 
+import jakarta.validation.ConstraintViolationException;
+
 @ControllerAdvice
 /*
  * @Order(Ordered.HIGHEST_PRECEDENCE) // To be sure that this class is called before
@@ -123,11 +125,19 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
 	}
 
+	@ExceptionHandler(ConstraintViolationException.class)
+	public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException ex) {
+		ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Invalid input provided",
+				ex.getMessage());
+
+		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+	}
+
 	@ExceptionHandler(UserSubscriptionException.class)
 	public ResponseEntity<ErrorResponse> handleUserSubscriptionException(UserSubscriptionException ex) {
-		ErrorResponse error = new ErrorResponse(HttpStatus.SERVICE_UNAVAILABLE.value(),
+		ErrorResponse error = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
 				"User subscription operation failed", ex.getMessage());
-		return new ResponseEntity<>(error, HttpStatus.SERVICE_UNAVAILABLE);
+		return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
 }

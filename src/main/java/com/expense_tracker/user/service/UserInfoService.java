@@ -68,8 +68,14 @@ public class UserInfoService implements UserDetailsService {
 	@Transactional
 	public UserSubscriptionResponseDTO addUserSubscription(@Valid Long userId,
 			AddUserSubscriptionDTO addUserSubscriptionDTO) {
+		UserInfo userInfo = repository.findById(userId)
+			.orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
 
-		return userSubscriptionService.createUserSubscriptionWithNewSubscription(userId, addUserSubscriptionDTO);
+		// populate addUserSubscriptionDTO with userInfo
+		addUserSubscriptionDTO.setUserInfo(userInfo);
+		// populate addUserSubscriptionDTO with subscription
+		addUserSubscriptionDTO.setSubscription(addUserSubscriptionDTO.getSubscription());
+		return userSubscriptionService.createUserSubscriptionWithNewSubscription(userInfo, addUserSubscriptionDTO);
 	}
 
 	@Validated
@@ -117,7 +123,7 @@ public class UserInfoService implements UserDetailsService {
 			return true;
 		}
 		catch (Exception ex) {
-			log.error("Failed deleting the following user id  : " + id);
+			log.error("Failed deleting the following user id  : {} ", id);
 			return false;
 		}
 	}

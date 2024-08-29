@@ -1,5 +1,7 @@
 package com.expense_tracker.subscription.service;
 
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -19,12 +21,22 @@ public class SubscriptionService {
 		this.subscriptionRepository = subscriptionRepository;
 	}
 
-	public Subscription addSubscription(SubscriptionDTO userSubscriptionDTO) {
-		log.info("Start adding subscription with AddUseruserSubscriptionDTO: {}", userSubscriptionDTO);
-		Subscription subscription = new Subscription();
-		subscription.setName(userSubscriptionDTO.getSubscriptionName());
-		subscription.setDescription(userSubscriptionDTO.getSubscriptionDescription());
-		return subscriptionRepository.save(subscription);
+	public Subscription getOrCreateSubscription(SubscriptionDTO userSubscriptionDTO) {
+
+		Optional<Subscription> subscription = subscriptionRepository.findByName(userSubscriptionDTO.getName());
+
+		if (subscription.isPresent()) {
+			log.info("Start adding subscription with AddUseruserSubscriptionDTO: {}", userSubscriptionDTO);
+			Subscription sub = subscription.get();
+			return subscriptionRepository.save(sub);
+
+		}
+		else {
+			log.info("Start adding subscription with AddUseruserSubscriptionDTO: {}", userSubscriptionDTO);
+			Subscription newSubscription = new Subscription();
+			newSubscription.setName(userSubscriptionDTO.getName());
+			return subscriptionRepository.save(newSubscription);
+		}
 	}
 
 }

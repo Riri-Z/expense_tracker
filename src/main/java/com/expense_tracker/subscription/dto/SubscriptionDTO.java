@@ -5,8 +5,6 @@ import lombok.Data;
 @Data
 public class SubscriptionDTO {
 
-	private String subscriptionName;
-
-	private String subscriptionDescription;
+	private String name;
 
 }

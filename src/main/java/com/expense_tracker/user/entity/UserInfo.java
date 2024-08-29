@@ -18,12 +18,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 @EqualsAndHashCode(callSuper = true)
+@ToString(exclude = "userSubscriptions")
 public class UserInfo extends BaseEntity {
 
 	@Id
