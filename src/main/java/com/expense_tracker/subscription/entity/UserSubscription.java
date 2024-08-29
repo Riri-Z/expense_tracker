@@ -17,6 +17,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -27,6 +29,8 @@ import lombok.ToString;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(exclude = { "userInfo", "subscription" })
+@Table(name = "user_subscription",
+		uniqueConstraints = { @UniqueConstraint(columnNames = { "user_info_id", "subscription_id" }) })
 public class UserSubscription extends BaseEntity {
 
 	@Id

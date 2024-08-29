@@ -1,5 +1,7 @@
 package com.expense_tracker.subscription.service;
 
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -64,6 +66,7 @@ public class UserSubscriptionService {
 		}
 	}
 
+	@Transactional
 	public UserSubscription addUserSubscription(UserSubscriptionDTO userSubscriptionDTO) {
 		try {
 
@@ -76,7 +79,21 @@ public class UserSubscriptionService {
 			userSubscription.setStatus(userSubscriptionDTO.getStatus());
 			userSubscription.setUserInfo(userSubscriptionDTO.getUserInfo());
 			userSubscription.setSubscription(userSubscriptionDTO.getSubscription());
+			// verify if userSubscription isn't already in the database with the
+			// subscription id and userInfo id
 
+			UserInfo userInfo = userSubscriptionDTO.getUserInfo();
+			Long userInfoId = userInfo.getId();
+			Subscription subscription = userSubscriptionDTO.getSubscription();
+			Long subscriptionId = subscription.getId();
+			Optional<UserSubscription> userSubscriptionOptional = userSubscriptionRepository
+				.findByUserInfoIdAndSubscriptionId(userInfoId, subscriptionId);
+			if (userSubscriptionOptional.isPresent()) {
+				log.error("UserSubscription already exists with userInfoId: {} and subscriptionId: {}", userInfoId,
+						subscriptionId);
+				throw new UserSubscriptionException("UserSubscription already exists with userInfoId: " + userInfoId
+						+ " and subscriptionId: " + subscriptionId);
+			}
 			return userSubscriptionRepository.save(userSubscription);
 		}
 		catch (ConstraintViolationException ex) {
