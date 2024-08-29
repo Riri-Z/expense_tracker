@@ -1,10 +1,12 @@
 package com.expense_tracker.subscription.dto;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.ZonedDateTime;
 
+import com.expense_tracker.subscription.entity.Subscription;
 import com.expense_tracker.subscription.enums.BillingCycle;
 import com.expense_tracker.subscription.enums.SubscriptionStatus;
+import com.expense_tracker.user.entity.UserInfo;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.Data;
@@ -14,17 +16,17 @@ public class UserSubscriptionDTO {
 
 	private Long id;
 
-	private Long userId;
+	private UserInfo userInfo;
 
-	private Long subscriptionId;
-
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
-	private LocalDate startDate;
+	private Subscription subscription;
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
-	private LocalDate endDate;
+	private ZonedDateTime startDate;
 
-	private LocalDate renewalDate;
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
+	private ZonedDateTime endDate;
+
+	private ZonedDateTime renewalDate;
 
 	private BigDecimal amount;
 

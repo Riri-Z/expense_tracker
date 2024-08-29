@@ -1,7 +1,7 @@
 package com.expense_tracker.subscription.entity;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.ZonedDateTime;
 
 import com.expense_tracker.common.entity.BaseEntity;
 import com.expense_tracker.subscription.enums.BillingCycle;
@@ -21,10 +21,12 @@ import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Entity
 @Data
 @EqualsAndHashCode(callSuper = true)
+@ToString(exclude = { "userInfo", "subscription" })
 public class UserSubscription extends BaseEntity {
 
 	@Id
@@ -33,16 +35,16 @@ public class UserSubscription extends BaseEntity {
 
 	@NotNull
 	@Column(name = "subscription_start_date", columnDefinition = "TIMESTAMP")
-	private LocalDate startDate;
+	private ZonedDateTime startDate;
 
 	@NotNull
 	@Future
 	@Column(name = "subscription_end_date", columnDefinition = "TIMESTAMP")
-	private LocalDate endDate;
+	private ZonedDateTime endDate;
 
 	@NotNull
-	@Column(name = "renewal_date")
-	private LocalDate renewalDate;
+	@Column(name = "renewal_date", columnDefinition = "TIMESTAMP")
+	private ZonedDateTime renewalDate;
 
 	@NotNull
 	@Column(name = "amount")

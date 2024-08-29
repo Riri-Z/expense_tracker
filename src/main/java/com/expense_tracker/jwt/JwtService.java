@@ -25,6 +25,8 @@ public class JwtService {
 	@Value("${jwt.secret}")
 	private String secret;
 
+	public static final String TOKEN_KEY = "jwtToken";
+
 	@PostConstruct
 	public void init() {
 		if (secret == null || secret.trim().isEmpty()) {
@@ -33,11 +35,14 @@ public class JwtService {
 	}
 
 	// Generate token with given user name
-	public String generateToken(String id, String username) {
+	public Map<String, String> generateToken(String id, String username) {
 		Map<String, Object> claims = new HashMap<>();
 		claims.put("username", username);
 		claims.put("id", id);
-		return createToken(claims, id);
+		String token = createToken(claims, id);
+		Map<String, String> jwtToken = new HashMap<>();
+		jwtToken.put(TOKEN_KEY, token);
+		return jwtToken;
 	}
 
 	// Create a JWT token with specified claims and subject (id)

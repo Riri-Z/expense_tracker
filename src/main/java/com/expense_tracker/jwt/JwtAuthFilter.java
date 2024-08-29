@@ -1,5 +1,7 @@
 package com.expense_tracker.jwt;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +21,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
+
+	private final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
 
 	private final JwtService jwtService;
 
@@ -59,7 +63,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 					SecurityContextHolder.getContext().setAuthentication(authToken);
 				}
 				else {
-					logger.warn("Invalid JWT token for user: {}" + id);
+					log.warn("Invalid JWT token for user: {}", id);
 				}
 			}
 
@@ -67,7 +71,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 			filterChain.doFilter(request, response);
 		}
 		catch (ServletException | java.io.IOException | UsernameNotFoundException e) {
-			logger.error("Error processing JWT token", e);
+			log.error("Error processing JWT token", e);
 
 		}
 	}
