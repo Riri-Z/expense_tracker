@@ -50,7 +50,7 @@ public class SecurityConfig {
 					auth -> auth.requestMatchers("/auth/welcome", "/auth/addNewUser", "/auth/generateToken")
 						.permitAll()
 						.requestMatchers("/auth/user/**")
-						.hasAuthority("ROLE_USER")
+						.hasAnyRole("USER", "ADMIN")
 						.requestMatchers("/auth/admin/**")
 						.hasAuthority("ROLE_ADMIN")
 						.anyRequest()
