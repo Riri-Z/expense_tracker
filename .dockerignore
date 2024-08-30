@@ -1,0 +1,10 @@
+#This file aims to exclude  all files except files that have been selected.
+#It's helps to reduce the size of the build context, improve build performance and security of docker image
+# Ignore all files in the root directory
+*
+# Include the src directory
+!src/
+# Include the pom.xml file
+!pom.xml
+# Exclude the target directory and its contents
+target/
