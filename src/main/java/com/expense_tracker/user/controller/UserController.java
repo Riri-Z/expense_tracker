@@ -99,8 +99,10 @@ public class UserController {
 	}
 
 	/**
-	 * PUT /user/password/{id} : Update the password of the user with the given id, and
+	 * PUT /user/password/{id} : Update the password of the user with the given id,
+	 * and
 	 * new passord and old password in the request body
+	 *
 	 * @param id
 	 * @param entity
 	 * @return
@@ -112,6 +114,13 @@ public class UserController {
 		service.updatePassword(userInfoDetails.getId(), request.getOldPassword(), request.getNewPassword());
 		return ResponseEntity.ok("Password updated successfully");
 
+	}
+
+	@PostMapping("user/reset-password")
+	public ResponseEntity<?> resetPassword (@Valid @RequestBody String email) {
+
+		service.createPasswordResetTokenForUser(email);
+		return ResponseEntity.ok("Password reset successfully");
 	}
 
 	@PostMapping("/addNewUser")
@@ -144,8 +153,7 @@ public class UserController {
 	public ResponseEntity<String> userProfile() {
 		try {
 			return ResponseEntity.ok("Welcome to User Profile");
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			System.out.println(e);
 
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -171,15 +179,13 @@ public class UserController {
 
 				// get user from bdd
 				UserInfo userInfo = userInfoRepository.findByUsername(userDetails.getUsername())
-					.orElseThrow(() -> new UserNotFoundException("User not found: " + userDetails.getUsername()));
+						.orElseThrow(() -> new UserNotFoundException("User not found: " + userDetails.getUsername()));
 				String idUser = String.valueOf((userInfo.getId()));
 				return ResponseEntity.ok(jwtService.generateToken(idUser, userInfo.getUsername()));
-			}
-			else {
+			} else {
 				throw new UserAccessDenied("Cannot generate token, authentication failed");
 			}
-		}
-		catch (InternalAuthenticationServiceException e) {
+		} catch (InternalAuthenticationServiceException e) {
 			log.error("Authentication failed for user: {}", authRequest.getUsername(), e);
 
 			throw new UserAccessDenied("Cannot generate token");
