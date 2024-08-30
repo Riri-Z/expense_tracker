@@ -8,6 +8,7 @@ import com.expense_tracker.subscription.dto.AddUserSubscriptionDTO;
 import com.expense_tracker.subscription.dto.SubscriptionDTO;
 import com.expense_tracker.subscription.dto.UserSubscriptionDTO;
 import com.expense_tracker.subscription.entity.Subscription;
+import com.expense_tracker.subscription.entity.UserSubscription;
 
 @Component
 public class UserSubscriptionMapper {
@@ -35,6 +36,22 @@ public class UserSubscriptionMapper {
 
 		log.info("Mapped AddUserSubscriptionDTO to UserSubscriptionDTO : {}", userSubscriptionDTO);
 		return userSubscriptionDTO;
+	}
+
+	public static UserSubscription userSubscriptionDTOtoEntity(UserSubscriptionDTO userSubscriptionDTO) {
+		log.info("Starting userSubscriptionDTOtoEntity: {}", userSubscriptionDTO);
+
+		UserSubscription userSubscription = new UserSubscription();
+		userSubscription.setStartDate(userSubscriptionDTO.getStartDate());
+		userSubscription.setEndDate(userSubscriptionDTO.getEndDate());
+		userSubscription.setRenewalDate(userSubscriptionDTO.getRenewalDate());
+		userSubscription.setAmount(userSubscriptionDTO.getAmount());
+		userSubscription.setBillingCycle(userSubscriptionDTO.getBillingCycle());
+		userSubscription.setStatus(userSubscriptionDTO.getStatus());
+		userSubscription.setUserInfo(userSubscriptionDTO.getUserInfo());
+		userSubscription.setSubscription(userSubscriptionDTO.getSubscription());
+
+		return userSubscription;
 	}
 
 }

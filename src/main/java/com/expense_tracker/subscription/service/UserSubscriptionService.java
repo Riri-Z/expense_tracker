@@ -1,12 +1,11 @@
 package com.expense_tracker.subscription.service;
 
-import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.expense_tracker.exception.userSubscription.UserSubscriptionException;
+import com.expense_tracker.exception.user_subscription.UserSubscriptionConflictException;
+import com.expense_tracker.exception.user_subscription.UserSubscriptionException;
 import com.expense_tracker.subscription.dto.AddUserSubscriptionDTO;
 import com.expense_tracker.subscription.dto.SubscriptionDTO;
 import com.expense_tracker.subscription.dto.UserSubscriptionDTO;
@@ -15,6 +14,7 @@ import com.expense_tracker.subscription.entity.Subscription;
 import com.expense_tracker.subscription.entity.UserSubscription;
 import com.expense_tracker.subscription.mapper.UserSubscriptionMapper;
 import com.expense_tracker.subscription.repository.UserSubscriptionRepository;
+import com.expense_tracker.subscription.validator.UserSubscriptionValidator;
 import com.expense_tracker.user.entity.UserInfo;
 
 import jakarta.transaction.Transactional;
@@ -29,10 +29,13 @@ public class UserSubscriptionService {
 
 	private final SubscriptionService subscriptionService;
 
+	private final UserSubscriptionValidator userSubscriptionValidator;
+
 	public UserSubscriptionService(UserSubscriptionRepository userSubscriptionRepository,
-			SubscriptionService subscriptionService) {
+			SubscriptionService subscriptionService, UserSubscriptionValidator userSubscriptionValidator) {
 		this.userSubscriptionRepository = userSubscriptionRepository;
 		this.subscriptionService = subscriptionService;
+		this.userSubscriptionValidator = userSubscriptionValidator;
 	}
 
 	@Transactional
@@ -55,6 +58,9 @@ public class UserSubscriptionService {
 			log.info("saved new userSubscription: {}", userSubscription);
 			return new UserSubscriptionResponseDTO(userInfo.getId(), subscription.getId(), userSubscription.getId());
 		}
+		catch (UserSubscriptionConflictException ex) {
+			throw new UserSubscriptionConflictException(ex.getMessage());
+		}
 		catch (ConstraintViolationException ex) {
 			log.error("Failed createUserSubscriptionWithNewSubscription with addUserSubscriptionDTO: {}",
 					addUserSubscriptionDTO);
@@ -69,40 +75,21 @@ public class UserSubscriptionService {
 	@Transactional
 	public UserSubscription addUserSubscription(UserSubscriptionDTO userSubscriptionDTO) {
 		try {
-
-			UserSubscription userSubscription = new UserSubscription();
-			userSubscription.setStartDate(userSubscriptionDTO.getStartDate());
-			userSubscription.setEndDate(userSubscriptionDTO.getEndDate());
-			userSubscription.setRenewalDate(userSubscriptionDTO.getRenewalDate());
-			userSubscription.setAmount(userSubscriptionDTO.getAmount());
-			userSubscription.setBillingCycle(userSubscriptionDTO.getBillingCycle());
-			userSubscription.setStatus(userSubscriptionDTO.getStatus());
-			userSubscription.setUserInfo(userSubscriptionDTO.getUserInfo());
-			userSubscription.setSubscription(userSubscriptionDTO.getSubscription());
-			// verify if userSubscription isn't already in the database with the
-			// subscription id and userInfo id
+			log.info("Started addUserSubscription with the following  userSubscriptionDTO: {} ", userSubscriptionDTO);
+			UserSubscription userSubscription = UserSubscriptionMapper.userSubscriptionDTOtoEntity(userSubscriptionDTO);
 
 			UserInfo userInfo = userSubscriptionDTO.getUserInfo();
 			Long userInfoId = userInfo.getId();
 			Subscription subscription = userSubscriptionDTO.getSubscription();
 			Long subscriptionId = subscription.getId();
-			Optional<UserSubscription> userSubscriptionOptional = userSubscriptionRepository
-				.findByUserInfoIdAndSubscriptionId(userInfoId, subscriptionId);
-			if (userSubscriptionOptional.isPresent()) {
-				log.error("UserSubscription already exists with userInfoId: {} and subscriptionId: {}", userInfoId,
-						subscriptionId);
-				throw new UserSubscriptionException("UserSubscription already exists with userInfoId: " + userInfoId
-						+ " and subscriptionId: " + subscriptionId);
-			}
+
+			userSubscriptionValidator.validateUniqueUserSubscription(userInfoId, subscriptionId);
 			return userSubscriptionRepository.save(userSubscription);
 		}
-		catch (ConstraintViolationException ex) {
-			log.error("Failed adding user subscription with userSubscriptionDTO: {}, with ex :{}", userSubscriptionDTO,
-					ex.getMessage());
-			throw new UserSubscriptionException(ex.getMessage());
+		catch (UserSubscriptionConflictException ex) {
+			throw new UserSubscriptionConflictException(ex.getMessage());
 		}
-		catch (Exception ex) {
-			log.error("Failed adding user subscription with userSubscriptionDTO: {}", userSubscriptionDTO);
+		catch (ConstraintViolationException ex) {
 			throw new UserSubscriptionException(ex.getMessage());
 		}
 	}
