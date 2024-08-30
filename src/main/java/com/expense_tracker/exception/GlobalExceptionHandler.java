@@ -22,15 +22,12 @@ import com.expense_tracker.exception.user.MissMatchedPasswordException;
 import com.expense_tracker.exception.user.UserAccessDenied;
 import com.expense_tracker.exception.user.UserException;
 import com.expense_tracker.exception.user.UserNotFoundException;
-import com.expense_tracker.exception.userSubscription.UserSubscriptionException;
+import com.expense_tracker.exception.user_subscription.UserSubscriptionConflictException;
+import com.expense_tracker.exception.user_subscription.UserSubscriptionException;
 
 import jakarta.validation.ConstraintViolationException;
 
 @ControllerAdvice
-/*
- * @Order(Ordered.HIGHEST_PRECEDENCE) // To be sure that this class is called before
- * classes // provided by spring
- */
 public class GlobalExceptionHandler {
 
 	private static final Logger logg = LoggerFactory.getLogger(GlobalExceptionHandler.class);
@@ -131,6 +128,13 @@ public class GlobalExceptionHandler {
 				ex.getMessage());
 
 		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+	}
+
+	@ExceptionHandler(UserSubscriptionConflictException.class)
+	public ResponseEntity<ErrorResponse> handleUserSubscriptionException(UserSubscriptionConflictException ex) {
+		ErrorResponse error = new ErrorResponse(HttpStatus.CONFLICT.value(), "This user has already this subscription",
+				ex.getMessage());
+		return new ResponseEntity<>(error, HttpStatus.CONFLICT);
 	}
 
 	@ExceptionHandler(UserSubscriptionException.class)
