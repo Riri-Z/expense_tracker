@@ -26,7 +26,7 @@ public class PasswordControler {
 	@PostMapping("/reset-password")
 	public String resetPassword(@RequestBody PasswordResetRequestUtil passwordResetRequestUtil,
 			@RequestParam("token") String passwordResetToken) {
-
+		log.info("Start resetPassword with passwordResetToken :  {}", passwordResetToken);
 		String tokenValidation = userInfoService.validatePasswordResetToken(passwordResetToken);
 		if (!tokenValidation.equalsIgnoreCase("valid")) {
 			// TODO : throw error "Invalid password reset token"

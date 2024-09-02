@@ -27,9 +27,19 @@ public class PasswordResetTokenService {
 	@Transactional
 	public void createPasswordResetTokenForUser(String passwordToken, UserInfo userInfo) {
 		log.info("Start create password reset token for user : {} ", userInfo);
-		PasswordResetToken passwordResetToken = new PasswordResetToken(passwordToken, userInfo);
-		passwordResetTokenRepository.save(passwordResetToken);
-		log.info("Save in bdd passwordResetToken : {} ", passwordResetToken);
+		// check if
+		PasswordResetToken existingToken = passwordResetTokenRepository.findByUserInfo(userInfo);
+		if (existingToken != null) {
+			log.info("existingToken  with user id : {} so we update only token : {} ", userInfo.getId(), passwordToken);
+			PasswordResetToken passwordResetToken = new PasswordResetToken(passwordToken, existingToken.getId(),userInfo);
+			passwordResetTokenRepository.save(passwordResetToken);
+		}
+		else {
+			PasswordResetToken passwordResetToken = new PasswordResetToken(passwordToken,userInfo);
+			PasswordResetToken savedNewRow = passwordResetTokenRepository.save(passwordResetToken);
+			log.info("Saved in bdd PasswordResetToken : {} ", savedNewRow);
+		}
+
 	}
 
 	// validate token
