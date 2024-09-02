@@ -2,6 +2,7 @@ package com.expense_tracker.user.controller;
 
 import java.nio.file.AccessDeniedException;
 import java.util.Map;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +25,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.expense_tracker.email.service.EmailService;
 import com.expense_tracker.exception.user.UserAccessDenied;
 import com.expense_tracker.exception.user.UserNotFoundException;
 import com.expense_tracker.jwt.JwtService;
+import com.expense_tracker.password.util.PasswordResetRequestUtil;
 import com.expense_tracker.security.AuthRequest;
 import com.expense_tracker.subscription.dto.AddUserSubscriptionDTO;
 import com.expense_tracker.subscription.dto.UserSubscriptionResponseDTO;
@@ -38,29 +41,40 @@ import com.expense_tracker.user.repository.UserInfoRepository;
 import com.expense_tracker.user.service.UserInfoDetails;
 import com.expense_tracker.user.service.UserInfoService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/auth")
 public class UserController {
 
+	/*
+	 * TODO: Create IUserService to link controller to service, and not access UserService
+	 * directly. It's like we create a contract between controller and service , and limit
+	 * their dependency Also, it will ease the creation of mock test,
+	 *
+	 */
 	private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
-	private final UserInfoService service;
+	private final UserInfoService userInfoService;
 
 	private final JwtService jwtService;
+
+	private final EmailService emailService;
 
 	private final AuthenticationManager authenticationManager;
 
 	private final UserInfoRepository userInfoRepository;
 
-	public UserController(UserInfoService service, JwtService jwtService, AuthenticationManager authenticationManager,
-			UserInfoRepository userInfoRepository) {
+	public UserController(UserInfoService userInfoService, JwtService jwtService,
+			AuthenticationManager authenticationManager, UserInfoRepository userInfoRepository,
+			EmailService emailService) {
 
-		this.service = service;
+		this.userInfoService = userInfoService;
 		this.jwtService = jwtService;
 		this.authenticationManager = authenticationManager;
 		this.userInfoRepository = userInfoRepository;
+		this.emailService = emailService;
 	}
 
 	@GetMapping("/welcome")
@@ -93,16 +107,14 @@ public class UserController {
 			throw new AccessDeniedException("You are not authorized to update this user");
 		}
 
-		UserInfoDTO updatedUser = service.updateUser(id, updateUserDTO);
+		UserInfoDTO updatedUser = userInfoService.updateUser(id, updateUserDTO);
 		return ResponseEntity.ok(updatedUser);
 
 	}
 
 	/**
-	 * PUT /user/password/{id} : Update the password of the user with the given id,
-	 * and
+	 * PUT /user/password/{id} : Update the password of the user with the given id, and
 	 * new passord and old password in the request body
-	 *
 	 * @param id
 	 * @param entity
 	 * @return
@@ -111,21 +123,32 @@ public class UserController {
 	public ResponseEntity<String> updatePassword(@AuthenticationPrincipal UserInfoDetails userInfoDetails,
 			@Valid @RequestBody UpdatePasswordDTO request) {
 
-		service.updatePassword(userInfoDetails.getId(), request.getOldPassword(), request.getNewPassword());
+		userInfoService.updatePassword(userInfoDetails.getId(), request.getOldPassword(), request.getNewPassword());
 		return ResponseEntity.ok("Password updated successfully");
 
 	}
 
-	@PostMapping("user/reset-password")
-	public ResponseEntity<?> resetPassword (@Valid @RequestBody String email) {
+	@PostMapping("user/request-password-reset")
+	public ResponseEntity<String> requestPasswordReset(@RequestBody PasswordResetRequestUtil passwordResetRequestUtil,
+			HttpServletRequest request) {
+		UserInfo userInfoOptional = userInfoService.findByEmail(passwordResetRequestUtil.getEmail());
 
-		service.createPasswordResetTokenForUser(email);
-		return ResponseEntity.ok("Password reset successfully");
+		// TODO : reafactor this to be cleaner
+
+		// extract userInfo, so the type is now Userinfo, and notOptional anymore
+		UserInfo userInfo = userInfoOptional;
+		// generate token
+		String passwordToken = UUID.randomUUID().toString();
+		// save token in bdd
+		userInfoService.createPasswordResetTokenForUser(passwordToken, userInfo);
+		String passwordResetUrl = passwordResetEmailLink(userInfo, applicationUrl(request), passwordToken);
+
+		return ResponseEntity.ok(passwordResetUrl);
 	}
 
 	@PostMapping("/addNewUser")
 	public ResponseEntity<UserInfoDTO> addNewUser(@Valid @RequestBody UserInfo userInfo) {
-		UserInfoDTO addedUser = service.addUser(userInfo);
+		UserInfoDTO addedUser = userInfoService.addUser(userInfo);
 		return ResponseEntity.ok(addedUser);
 	}
 
@@ -137,14 +160,14 @@ public class UserController {
 		UserInfoDetails userDetails = (UserInfoDetails) authentication.getPrincipal();
 
 		Long id = userDetails.getId();
-		UserSubscriptionResponseDTO result = service.addUserSubscription(id, payload);
+		UserSubscriptionResponseDTO result = userInfoService.addUserSubscription(id, payload);
 		return ResponseEntity.ok(result);
 	}
 
 	@DeleteMapping("user/delete")
 	public ResponseEntity<String> deleteUser(@AuthenticationPrincipal UserInfoDetails userInfoDetails) {
 		Long id = userInfoDetails.getId();
-		service.deleteUser(id);
+		userInfoService.deleteUser(id);
 		return ResponseEntity.ok("User with id : " + id + " was deleted ");
 	}
 
@@ -153,7 +176,8 @@ public class UserController {
 	public ResponseEntity<String> userProfile() {
 		try {
 			return ResponseEntity.ok("Welcome to User Profile");
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			System.out.println(e);
 
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -179,17 +203,33 @@ public class UserController {
 
 				// get user from bdd
 				UserInfo userInfo = userInfoRepository.findByUsername(userDetails.getUsername())
-						.orElseThrow(() -> new UserNotFoundException("User not found: " + userDetails.getUsername()));
+					.orElseThrow(() -> new UserNotFoundException("User not found: " + userDetails.getUsername()));
 				String idUser = String.valueOf((userInfo.getId()));
 				return ResponseEntity.ok(jwtService.generateToken(idUser, userInfo.getUsername()));
-			} else {
+			}
+			else {
 				throw new UserAccessDenied("Cannot generate token, authentication failed");
 			}
-		} catch (InternalAuthenticationServiceException e) {
+		}
+		catch (InternalAuthenticationServiceException e) {
 			log.error("Authentication failed for user: {}", authRequest.getUsername(), e);
 
 			throw new UserAccessDenied("Cannot generate token");
 		}
+	}
+
+	public String applicationUrl(HttpServletRequest request) {
+		// TODO: handle prod url
+		return "http://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath();
+	}
+
+	private String passwordResetEmailLink(UserInfo userInfo, String applicationUrl, String passwordToken) {
+		log.info("Start passwordResetEmailLink with url: {}, passwordToken : {}", applicationUrl, passwordToken);
+		String url = applicationUrl + "/auth/reset-password?token=" + passwordToken;
+		emailService.sendPasswordResetEmail(userInfo.getEmail(), url);
+		log.info("Email sent");
+
+		return url;
 	}
 
 }

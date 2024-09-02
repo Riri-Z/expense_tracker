@@ -1,9 +1,6 @@
 package com.expense_tracker.user.service;
 
-import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,12 +14,12 @@ import org.springframework.validation.annotation.Validated;
 import com.expense_tracker.exception.user.DuplicateUserException;
 import com.expense_tracker.exception.user.MissMatchedPasswordException;
 import com.expense_tracker.exception.user.UserNotFoundException;
+import com.expense_tracker.password.service.PasswordResetTokenService;
 import com.expense_tracker.subscription.dto.AddUserSubscriptionDTO;
 import com.expense_tracker.subscription.dto.UserSubscriptionResponseDTO;
 import com.expense_tracker.subscription.service.UserSubscriptionService;
 import com.expense_tracker.user.dto.UpdateUserDTO;
 import com.expense_tracker.user.dto.UserInfoDTO;
-import com.expense_tracker.user.entity.PasswordResetToken;
 import com.expense_tracker.user.entity.UserInfo;
 import com.expense_tracker.user.mapper.UserInfoMapper;
 import com.expense_tracker.user.repository.UserInfoRepository;
@@ -45,15 +42,15 @@ public class UserInfoService implements UserDetailsService {
 
 	private final UserSubscriptionService userSubscriptionService;
 
-	private final PasswordResetToken passwordResetToken;
+	private final PasswordResetTokenService passwordResetTokenService;
 
 	public UserInfoService(UserInfoRepository repository, PasswordEncoder encoder, UserInfoMapper userInfoMapper,
-			UserSubscriptionService userSubscriptionService, PasswordResetToken passwordResetToken) {
+			UserSubscriptionService userSubscriptionService, PasswordResetTokenService passwordResetTokenService) {
 		this.repository = repository;
 		this.encoder = encoder;
 		this.userInfoMapper = userInfoMapper;
 		this.userSubscriptionService = userSubscriptionService;
-		this.passwordResetToken = passwordResetToken;
+		this.passwordResetTokenService = passwordResetTokenService;
 	}
 
 	@Override
@@ -62,31 +59,29 @@ public class UserInfoService implements UserDetailsService {
 
 		// Converting UserInfo to UserDetails
 		return userDetail.map(UserInfoDetails::new)
-				.orElseThrow(() -> new UserNotFoundException("User not found: " + username));
+			.orElseThrow(() -> new UserNotFoundException("User not found: " + username));
+	}
+
+	public UserInfo findByEmail(String email) {
+		return repository.findByEmail(email)
+			.orElseThrow(() -> new UserNotFoundException("User not found with id: " + email));
 	}
 
 	public UserDetails loadUserById(Long id) throws UserNotFoundException {
 		UserInfo user = repository.findById(id)
-				.orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+			.orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
 
 		return new UserInfoDetails(user);
 	}
 
 	public void createPasswordResetTokenForUser(String token, UserInfo userInfo) {
-		LocalDateTime tokenExpiryDate  =LocalDateTime.now().plusHours(24) ;
-		PasswordResetToken myToken = new PasswordResetToken();
-		myToken.setToken(token);
-		myToken.setUserInfo(userInfo);
-		myToken.setDate(tokenExpiryDate);
-		passwordResetTokenRepository.save(myToken);
-
+		passwordResetTokenService.createPasswordResetTokenForUser(token, userInfo);
 	}
 
-	public void resetPassword(String email) {
-		UserInfo userInfo = repository.findByEmail(email)
-				.orElseThrow(() -> new UserNotFoundException(email + NOT_FOUND));
-		String token = UUID.randomUUID().toString();
-		createPasswordResetTokenForUser(token, userInfo);
+	public void resetPassword(UserInfo userInfo, String newPassword) {
+
+		userInfo.setPassword(encoder.encode(newPassword));
+		repository.save(userInfo);
 
 	}
 
@@ -95,7 +90,7 @@ public class UserInfoService implements UserDetailsService {
 	public UserSubscriptionResponseDTO addUserSubscription(@Valid Long userId,
 			AddUserSubscriptionDTO addUserSubscriptionDTO) {
 		UserInfo userInfo = repository.findById(userId)
-				.orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
+			.orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
 
 		// populate addUserSubscriptionDTO with userInfo
 		addUserSubscriptionDTO.setUserInfo(userInfo);
@@ -147,7 +142,8 @@ public class UserInfoService implements UserDetailsService {
 			log.info("SUCCESS delete id: {}", id);
 
 			return true;
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			log.error("Failed deleting the following user id  : {} ", id);
 			return false;
 		}
@@ -208,6 +204,20 @@ public class UserInfoService implements UserDetailsService {
 		if (Boolean.TRUE.equals(repository.existsByEmailAndIdNot(email, excludeUserId))) {
 			throw new DuplicateUserException("Email already in use: " + email);
 		}
+	}
+
+	public String validatePasswordResetToken(String token) {
+		return passwordResetTokenService.validatePasswordResetToken(token);
+	}
+
+	public UserInfo findUserByPasswordToken(String passwordResetToken) {
+		UserInfo userInfo = passwordResetTokenService.findUserByPasswordToken(passwordResetToken);
+		if (userInfo == null) {
+			log.debug("USER NOT FOUND WITH TOKEN : {}", passwordResetToken);
+			throw new UserNotFoundException("User not found by token: " + passwordResetToken);
+		}
+		log.info("user found : {}", userInfo);
+		return userInfo;
 	}
 
 }
