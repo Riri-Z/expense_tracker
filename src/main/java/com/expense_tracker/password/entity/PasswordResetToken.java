@@ -40,8 +40,10 @@ public class PasswordResetToken {
 		this.expirationTime = this.getTokenExpirationTime();
 	}
 
-	public PasswordResetToken(String token) {
+	public PasswordResetToken(String token, Long id, UserInfo userInfo) {
 		this.token = token;
+		this.id = id;
+		this.userInfo = userInfo;
 		this.expirationTime = this.getTokenExpirationTime();
 	}
 
