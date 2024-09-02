@@ -72,7 +72,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 		}
 		catch (ServletException | java.io.IOException | UsernameNotFoundException e) {
 			log.error("Error processing JWT token", e);
-
+			// return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value());
 		}
 	}
 

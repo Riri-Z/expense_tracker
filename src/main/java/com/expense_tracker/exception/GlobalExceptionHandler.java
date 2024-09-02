@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import com.expense_tracker.exception.user.DuplicateUserException;
+import com.expense_tracker.exception.user.FailedSendingResetPasswordEmail;
 import com.expense_tracker.exception.user.MissMatchedPasswordException;
 import com.expense_tracker.exception.user.UserAccessDenied;
 import com.expense_tracker.exception.user.UserException;
@@ -135,6 +136,13 @@ public class GlobalExceptionHandler {
 		ErrorResponse error = new ErrorResponse(HttpStatus.CONFLICT.value(), "This user has already this subscription",
 				ex.getMessage());
 		return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+	}
+
+	@ExceptionHandler(FailedSendingResetPasswordEmail.class)
+	public ResponseEntity<ErrorResponse> handleSendEmailException(FailedSendingResetPasswordEmail ex) {
+		ErrorResponse error = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+				"Sending email operation failed", ex.getMessage());
+		return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
 	@ExceptionHandler(UserSubscriptionException.class)
