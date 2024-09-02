@@ -225,7 +225,7 @@ public class UserController {
 
 	private String passwordResetEmailLink(UserInfo userInfo, String applicationUrl, String passwordToken) {
 		log.info("Start passwordResetEmailLink with url: {}, passwordToken : {}", applicationUrl, passwordToken);
-		String url = applicationUrl + "/auth/reset-password?token=" + passwordToken;
+		String url = applicationUrl + "/reset-password?token=" + passwordToken;
 		emailService.sendPasswordResetEmail(userInfo.getEmail(), url);
 		log.info("Email sent");
 
