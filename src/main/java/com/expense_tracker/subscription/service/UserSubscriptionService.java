@@ -1,5 +1,7 @@
 package com.expense_tracker.subscription.service;
 
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import com.expense_tracker.subscription.dto.UserSubscriptionResponseDTO;
 import com.expense_tracker.subscription.entity.Subscription;
 import com.expense_tracker.subscription.entity.UserSubscription;
 import com.expense_tracker.subscription.mapper.UserSubscriptionMapper;
+import com.expense_tracker.subscription.repository.SubscriptionRepository;
 import com.expense_tracker.subscription.repository.UserSubscriptionRepository;
 import com.expense_tracker.subscription.validator.UserSubscriptionValidator;
 import com.expense_tracker.user.entity.UserInfo;
@@ -27,48 +30,67 @@ public class UserSubscriptionService {
 
 	private final UserSubscriptionRepository userSubscriptionRepository;
 
-	private final SubscriptionService subscriptionService;
-
 	private final UserSubscriptionValidator userSubscriptionValidator;
 
+	private final SubscriptionRepository subscriptionRepository;
+
+
 	public UserSubscriptionService(UserSubscriptionRepository userSubscriptionRepository,
-			SubscriptionService subscriptionService, UserSubscriptionValidator userSubscriptionValidator) {
+			UserSubscriptionValidator userSubscriptionValidator, SubscriptionRepository subscriptionRepository
+			) {
 		this.userSubscriptionRepository = userSubscriptionRepository;
-		this.subscriptionService = subscriptionService;
 		this.userSubscriptionValidator = userSubscriptionValidator;
+		this.subscriptionRepository = subscriptionRepository;
+
 	}
 
 	@Transactional
-	public UserSubscriptionResponseDTO createUserSubscriptionWithNewSubscription(UserInfo userInfo,
+	public UserSubscriptionResponseDTO createUserSubscriptionWithNewSubscription(
 			AddUserSubscriptionDTO addUserSubscriptionDTO) {
 		try {
 			log.info("starting adding user subscription with userSubscriptionDTO: {}", addUserSubscriptionDTO);
 
+			UserInfo userInfo = addUserSubscriptionDTO.getUserInfo();
+
 			SubscriptionDTO subscriptionDTO = UserSubscriptionMapper.toSubscriptionDTO(addUserSubscriptionDTO);
-			Subscription subscription = subscriptionService.getOrCreateSubscription(subscriptionDTO);
+			Subscription subscription = getOrCreateSubscription(subscriptionDTO);
 			log.info("saved new subscription id: {}", subscription.getId());
 
 			addUserSubscriptionDTO.setUserInfo(userInfo);
 			addUserSubscriptionDTO.setSubscription(subscription);
 
 			UserSubscriptionDTO userSubscriptionDTO = UserSubscriptionMapper
-				.toUserSubscriptionTDO(addUserSubscriptionDTO);
+					.toUserSubscriptionTDO(addUserSubscriptionDTO);
 
 			UserSubscription userSubscription = addUserSubscription(userSubscriptionDTO);
 			log.info("saved new userSubscription: {}", userSubscription);
 			return new UserSubscriptionResponseDTO(userInfo.getId(), subscription.getId(), userSubscription.getId());
-		}
-		catch (UserSubscriptionConflictException ex) {
+		} catch (UserSubscriptionConflictException ex) {
 			throw new UserSubscriptionConflictException(ex.getMessage());
-		}
-		catch (ConstraintViolationException ex) {
+		} catch (ConstraintViolationException ex) {
 			log.error("Failed createUserSubscriptionWithNewSubscription with addUserSubscriptionDTO: {}",
 					addUserSubscriptionDTO);
 			throw new UserSubscriptionException(ex.getMessage());
-		}
-		catch (Exception ex) {
+		} catch (Exception ex) {
 			log.error("Failed adding user subscription with addUserSubscriptionDTO: {}", addUserSubscriptionDTO);
 			throw new UserSubscriptionException(ex.getMessage());
+		}
+	}
+
+	public Subscription getOrCreateSubscription(SubscriptionDTO userSubscriptionDTO) {
+
+		Optional<Subscription> subscription = subscriptionRepository.findByName(userSubscriptionDTO.getName());
+
+		if (subscription.isPresent()) {
+			log.info("Start adding subscription with AddUseruserSubscriptionDTO: {}", userSubscriptionDTO);
+			Subscription sub = subscription.get();
+			return subscriptionRepository.save(sub);
+
+		} else {
+			log.info("Start adding subscription with AddUseruserSubscriptionDTO: {}", userSubscriptionDTO);
+			Subscription newSubscription = new Subscription();
+			newSubscription.setName(userSubscriptionDTO.getName());
+			return subscriptionRepository.save(newSubscription);
 		}
 	}
 
@@ -85,11 +107,9 @@ public class UserSubscriptionService {
 
 			userSubscriptionValidator.validateUniqueUserSubscription(userInfoId, subscriptionId);
 			return userSubscriptionRepository.save(userSubscription);
-		}
-		catch (UserSubscriptionConflictException ex) {
+		} catch (UserSubscriptionConflictException ex) {
 			throw new UserSubscriptionConflictException(ex.getMessage());
-		}
-		catch (ConstraintViolationException ex) {
+		} catch (ConstraintViolationException ex) {
 			throw new UserSubscriptionException(ex.getMessage());
 		}
 	}

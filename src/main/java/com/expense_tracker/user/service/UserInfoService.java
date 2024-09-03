@@ -8,16 +8,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import com.expense_tracker.exception.user.DuplicateUserException;
 import com.expense_tracker.exception.user.MissMatchedPasswordException;
 import com.expense_tracker.exception.user.UserNotFoundException;
 import com.expense_tracker.password.service.PasswordResetTokenService;
-import com.expense_tracker.subscription.dto.AddUserSubscriptionDTO;
-import com.expense_tracker.subscription.dto.UserSubscriptionResponseDTO;
-import com.expense_tracker.subscription.service.UserSubscriptionService;
 import com.expense_tracker.user.dto.UpdateUserDTO;
 import com.expense_tracker.user.dto.UserInfoDTO;
 import com.expense_tracker.user.entity.UserInfo;
@@ -40,16 +36,14 @@ public class UserInfoService implements UserDetailsService {
 
 	private final UserInfoMapper userInfoMapper;
 
-	private final UserSubscriptionService userSubscriptionService;
 
 	private final PasswordResetTokenService passwordResetTokenService;
 
 	public UserInfoService(UserInfoRepository repository, PasswordEncoder encoder, UserInfoMapper userInfoMapper,
-			UserSubscriptionService userSubscriptionService, PasswordResetTokenService passwordResetTokenService) {
+		 PasswordResetTokenService passwordResetTokenService) {
 		this.repository = repository;
 		this.encoder = encoder;
 		this.userInfoMapper = userInfoMapper;
-		this.userSubscriptionService = userSubscriptionService;
 		this.passwordResetTokenService = passwordResetTokenService;
 	}
 
@@ -90,20 +84,6 @@ public class UserInfoService implements UserDetailsService {
 		userInfo.setPassword(encoder.encode(newPassword));
 		repository.save(userInfo);
 
-	}
-
-	@Validated
-	@Transactional
-	public UserSubscriptionResponseDTO addUserSubscription(@Valid Long userId,
-			AddUserSubscriptionDTO addUserSubscriptionDTO) {
-		UserInfo userInfo = repository.findById(userId)
-			.orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
-
-		// populate addUserSubscriptionDTO with userInfo
-		addUserSubscriptionDTO.setUserInfo(userInfo);
-		// populate addUserSubscriptionDTO with subscription
-		addUserSubscriptionDTO.setSubscription(addUserSubscriptionDTO.getSubscription());
-		return userSubscriptionService.createUserSubscriptionWithNewSubscription(userInfo, addUserSubscriptionDTO);
 	}
 
 	@Validated
