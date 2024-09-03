@@ -19,12 +19,8 @@ public class SubscriptionController {
 
 	private final UserSubscriptionService userSubscriptionService;
 
-	public SubscriptionController(/* JwtService jwtService , AuthenticationManager authenticationManager, */
-			UserSubscriptionService userSubscriptionService) {
-		/*
-		 * this.jwtService = jwtService;
-		 * this.authenticationManager = authenticationManager;
-		 */
+	public SubscriptionController(UserSubscriptionService userSubscriptionService) {
+
 		this.userSubscriptionService = userSubscriptionService;
 
 	}
@@ -34,8 +30,7 @@ public class SubscriptionController {
 			@AuthenticationPrincipal @RequestBody @Valid AddUserSubscriptionDTO payload) {
 		// get auth from spring context
 
-		UserSubscriptionResponseDTO result = userSubscriptionService.createUserSubscriptionWithNewSubscription(
-				payload);
+		UserSubscriptionResponseDTO result = userSubscriptionService.createUserSubscriptionWithNewSubscription(payload);
 		return new ApiResponse<>("ok", result);
 	}
 

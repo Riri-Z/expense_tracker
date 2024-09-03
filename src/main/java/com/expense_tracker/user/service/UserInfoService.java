@@ -36,11 +36,10 @@ public class UserInfoService implements UserDetailsService {
 
 	private final UserInfoMapper userInfoMapper;
 
-
 	private final PasswordResetTokenService passwordResetTokenService;
 
 	public UserInfoService(UserInfoRepository repository, PasswordEncoder encoder, UserInfoMapper userInfoMapper,
-		 PasswordResetTokenService passwordResetTokenService) {
+			PasswordResetTokenService passwordResetTokenService) {
 		this.repository = repository;
 		this.encoder = encoder;
 		this.userInfoMapper = userInfoMapper;
