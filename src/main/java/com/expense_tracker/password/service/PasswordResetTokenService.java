@@ -31,11 +31,12 @@ public class PasswordResetTokenService {
 		PasswordResetToken existingToken = passwordResetTokenRepository.findByUserInfo(userInfo);
 		if (existingToken != null) {
 			log.info("existingToken  with user id : {} so we update only token : {} ", userInfo.getId(), passwordToken);
-			PasswordResetToken passwordResetToken = new PasswordResetToken(passwordToken, existingToken.getId(),userInfo);
+			PasswordResetToken passwordResetToken = new PasswordResetToken(passwordToken, existingToken.getId(),
+					userInfo);
 			passwordResetTokenRepository.save(passwordResetToken);
 		}
 		else {
-			PasswordResetToken passwordResetToken = new PasswordResetToken(passwordToken,userInfo);
+			PasswordResetToken passwordResetToken = new PasswordResetToken(passwordToken, userInfo);
 			PasswordResetToken savedNewRow = passwordResetTokenRepository.save(passwordResetToken);
 			log.info("Saved in bdd PasswordResetToken : {} ", savedNewRow);
 		}
@@ -48,13 +49,10 @@ public class PasswordResetTokenService {
 		if (token == null) {
 			return "Invalid password reset token";
 		}
-		// UserInfo userInfo = token.getUserInfo();
 
 		Calendar calendar = Calendar.getInstance();
-		// Check expire date token
-		if (
-
-		token.getTokenExpirationTime().getTime() - calendar.getTime().getTime() < 0) {
+		Boolean isTokenExpired = token.getTokenExpirationTime().getTime() - calendar.getTime().getTime() < 0;
+		if (Boolean.TRUE.equals(isTokenExpired)) {
 			return "Link expired, resend link";
 		}
 		return "valid";

@@ -2,7 +2,6 @@ package com.expense_tracker.user.controller;
 
 import java.nio.file.AccessDeniedException;
 import java.util.Map;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +28,6 @@ import com.expense_tracker.email.service.EmailService;
 import com.expense_tracker.exception.user.UserAccessDenied;
 import com.expense_tracker.exception.user.UserNotFoundException;
 import com.expense_tracker.jwt.JwtService;
-import com.expense_tracker.password.util.PasswordResetRequestUtil;
 import com.expense_tracker.security.AuthRequest;
 import com.expense_tracker.subscription.dto.AddUserSubscriptionDTO;
 import com.expense_tracker.subscription.dto.UserSubscriptionResponseDTO;
@@ -41,7 +39,6 @@ import com.expense_tracker.user.repository.UserInfoRepository;
 import com.expense_tracker.user.service.UserInfoDetails;
 import com.expense_tracker.user.service.UserInfoService;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @RestController
@@ -128,24 +125,6 @@ public class UserController {
 
 	}
 
-	@PostMapping("user/request-password-reset")
-	public ResponseEntity<String> requestPasswordReset(@RequestBody PasswordResetRequestUtil passwordResetRequestUtil,
-			HttpServletRequest request) {
-		UserInfo userInfoOptional = userInfoService.findByEmail(passwordResetRequestUtil.getEmail());
-
-		// TODO : reafactor this to be cleaner
-
-		// extract userInfo, so the type is now Userinfo, and notOptional anymore
-		UserInfo userInfo = userInfoOptional;
-		// generate token
-		String passwordToken = UUID.randomUUID().toString();
-		// save token in bdd
-		userInfoService.createPasswordResetTokenForUser(passwordToken, userInfo);
-		String passwordResetUrl = passwordResetEmailLink(userInfo, applicationUrl(request), passwordToken);
-
-		return ResponseEntity.ok(passwordResetUrl);
-	}
-
 	@PostMapping("/addNewUser")
 	public ResponseEntity<UserInfoDTO> addNewUser(@Valid @RequestBody UserInfo userInfo) {
 		UserInfoDTO addedUser = userInfoService.addUser(userInfo);
@@ -216,20 +195,6 @@ public class UserController {
 
 			throw new UserAccessDenied("Cannot generate token");
 		}
-	}
-
-	public String applicationUrl(HttpServletRequest request) {
-		// TODO: handle prod url
-		return "http://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath();
-	}
-
-	private String passwordResetEmailLink(UserInfo userInfo, String applicationUrl, String passwordToken) {
-		log.info("Start passwordResetEmailLink with url: {}, passwordToken : {}", applicationUrl, passwordToken);
-		String url = applicationUrl + "/reset-password?token=" + passwordToken;
-		emailService.sendPasswordResetEmail(userInfo.getEmail(), url);
-		log.info("Email sent");
-
-		return url;
 	}
 
 }
