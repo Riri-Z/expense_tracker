@@ -8,11 +8,16 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import com.expense_tracker.exception.user.DuplicateUserException;
 import com.expense_tracker.exception.user.MissMatchedPasswordException;
 import com.expense_tracker.exception.user.UserNotFoundException;
+import com.expense_tracker.password.service.PasswordResetTokenService;
+import com.expense_tracker.subscription.dto.AddUserSubscriptionDTO;
+import com.expense_tracker.subscription.dto.UserSubscriptionResponseDTO;
+import com.expense_tracker.subscription.service.UserSubscriptionService;
 import com.expense_tracker.user.dto.UpdateUserDTO;
 import com.expense_tracker.user.dto.UserInfoDTO;
 import com.expense_tracker.user.entity.UserInfo;
@@ -25,6 +30,8 @@ import jakarta.validation.Valid;
 @Service
 public class UserInfoService implements UserDetailsService {
 
+	private static final String NOT_FOUND = " not found";
+
 	private static final Logger log = LoggerFactory.getLogger(UserInfoService.class);
 
 	private final UserInfoRepository repository;
@@ -33,10 +40,17 @@ public class UserInfoService implements UserDetailsService {
 
 	private final UserInfoMapper userInfoMapper;
 
-	public UserInfoService(UserInfoRepository repository, PasswordEncoder encoder, UserInfoMapper userInfoMapper) {
+	private final UserSubscriptionService userSubscriptionService;
+
+	private final PasswordResetTokenService passwordResetTokenService;
+
+	public UserInfoService(UserInfoRepository repository, PasswordEncoder encoder, UserInfoMapper userInfoMapper,
+			UserSubscriptionService userSubscriptionService, PasswordResetTokenService passwordResetTokenService) {
 		this.repository = repository;
 		this.encoder = encoder;
 		this.userInfoMapper = userInfoMapper;
+		this.userSubscriptionService = userSubscriptionService;
+		this.passwordResetTokenService = passwordResetTokenService;
 	}
 
 	@Override
@@ -48,11 +62,48 @@ public class UserInfoService implements UserDetailsService {
 			.orElseThrow(() -> new UserNotFoundException("User not found: " + username));
 	}
 
+	public UserInfo findByEmail(String email) {
+		return repository.findByEmail(email)
+			.orElseThrow(() -> new UserNotFoundException("User not found with id: " + email));
+	}
+
+	public UserInfoDTO findById(Long id) {
+		UserInfo userInfo = repository.findById(id)
+			.orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+
+		return userInfoMapper.userInfoToDTO(userInfo);
+	}
+
 	public UserDetails loadUserById(Long id) throws UserNotFoundException {
 		UserInfo user = repository.findById(id)
 			.orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
 
 		return new UserInfoDetails(user);
+	}
+
+	public void createPasswordResetTokenForUser(String token, UserInfo userInfo) {
+		passwordResetTokenService.createPasswordResetTokenForUser(token, userInfo);
+	}
+
+	public void resetPassword(UserInfo userInfo, String newPassword) {
+
+		userInfo.setPassword(encoder.encode(newPassword));
+		repository.save(userInfo);
+
+	}
+
+	@Validated
+	@Transactional
+	public UserSubscriptionResponseDTO addUserSubscription(@Valid Long userId,
+			AddUserSubscriptionDTO addUserSubscriptionDTO) {
+		UserInfo userInfo = repository.findById(userId)
+			.orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
+
+		// populate addUserSubscriptionDTO with userInfo
+		addUserSubscriptionDTO.setUserInfo(userInfo);
+		// populate addUserSubscriptionDTO with subscription
+		addUserSubscriptionDTO.setSubscription(addUserSubscriptionDTO.getSubscription());
+		return userSubscriptionService.createUserSubscriptionWithNewSubscription(userInfo, addUserSubscriptionDTO);
 	}
 
 	@Validated
@@ -65,7 +116,7 @@ public class UserInfoService implements UserDetailsService {
 		UserFieldValidator.validateUserFields(userInfo.getPassword(), "Password");
 		UserFieldValidator.validateUserFields(userInfo.getRoles(), "Roles");
 
-		// Vérifications d'unicité
+		// check unicity
 		if (Boolean.TRUE.equals(repository.existsByEmail(userInfo.getEmail()))) {
 			throw new DuplicateUserException("Email already exists :" + userInfo.getEmail());
 		}
@@ -100,7 +151,7 @@ public class UserInfoService implements UserDetailsService {
 			return true;
 		}
 		catch (Exception ex) {
-			log.error("Failed deleting the following user id  : " + id);
+			log.error("Failed deleting the following user id  : {} ", id);
 			return false;
 		}
 	}
@@ -109,7 +160,7 @@ public class UserInfoService implements UserDetailsService {
 	public UserInfoDTO updateUser(@Valid Long id, UpdateUserDTO updateUserDTO) {
 		log.info("Updating user with updateUserDTO: {}", updateUserDTO);
 
-		UserInfo user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id + " not found"));
+		UserInfo user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id + NOT_FOUND));
 		UserFieldValidator.validateUserFields(updateUserDTO.getName(), "Name");
 		UserFieldValidator.validateUserFields(updateUserDTO.getEmail(), "Email");
 		UserFieldValidator.validateUserFields(updateUserDTO.getUsername(), "Username");
@@ -130,16 +181,16 @@ public class UserInfoService implements UserDetailsService {
 
 		}
 
-		UserInfo updaUserInfo = repository.save(user);
+		UserInfo updateUserInfo = repository.save(user);
 		log.info("Successfully updated user with id: {}", id);
 
-		return userInfoMapper.userInfoToDTO(updaUserInfo);
+		return userInfoMapper.userInfoToDTO(updateUserInfo);
 	}
 
 	public boolean updatePassword(Long id, String oldPassword, String newPassword) throws MissMatchedPasswordException {
 
 		// Get user from bdd
-		UserInfo userInfo = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id + " not found"));
+		UserInfo userInfo = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id + NOT_FOUND));
 		// Get encoded password from userInfo
 		String encodedPassword = userInfo.getPassword();
 		// Verify if old password is correct
@@ -150,6 +201,8 @@ public class UserInfoService implements UserDetailsService {
 		}
 		// Save encoded new password
 		userInfo.setPassword(encoder.encode(newPassword));
+		repository.save(userInfo);
+		log.info("Successfully updated password for user with id: {}", id);
 
 		return true;
 	}
@@ -158,6 +211,20 @@ public class UserInfoService implements UserDetailsService {
 		if (Boolean.TRUE.equals(repository.existsByEmailAndIdNot(email, excludeUserId))) {
 			throw new DuplicateUserException("Email already in use: " + email);
 		}
+	}
+
+	public String validatePasswordResetToken(String token) {
+		return passwordResetTokenService.validatePasswordResetToken(token);
+	}
+
+	public UserInfo findUserByPasswordToken(String passwordResetToken) {
+		UserInfo userInfo = passwordResetTokenService.findUserByPasswordToken(passwordResetToken);
+		if (userInfo == null) {
+			log.debug("USER NOT FOUND WITH TOKEN : {}", passwordResetToken);
+			throw new UserNotFoundException("User not found by token: " + passwordResetToken);
+		}
+		log.info("user found : {}", userInfo);
+		return userInfo;
 	}
 
 }

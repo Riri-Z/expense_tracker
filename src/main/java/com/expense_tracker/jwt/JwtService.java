@@ -25,6 +25,8 @@ public class JwtService {
 	@Value("${jwt.secret}")
 	private String secret;
 
+	public static final String TOKEN_KEY = "jwtToken";
+
 	@PostConstruct
 	public void init() {
 		if (secret == null || secret.trim().isEmpty()) {
@@ -33,19 +35,24 @@ public class JwtService {
 	}
 
 	// Generate token with given user name
-	public String generateToken(String id) {
+	public Map<String, String> generateToken(String id, String username) {
 		Map<String, Object> claims = new HashMap<>();
-		return createToken(claims, id);
+		claims.put("username", username);
+		claims.put("id", id);
+		String token = createToken(claims, id);
+		Map<String, String> jwtToken = new HashMap<>();
+		jwtToken.put(TOKEN_KEY, token);
+		return jwtToken;
 	}
 
-	// Create a JWT token with specified claims and subject (user name)
+	// Create a JWT token with specified claims and subject (id)
 	private String createToken(Map<String, Object> claims, String id) {
 		return Jwts.builder()
 			.setClaims(claims)
 			.setSubject(id)
 			.setIssuedAt(new Date())
-			// Token valid for 30 minutes
-			.setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30))
+			// Token valid for 12h
+			.setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 12))
 			.signWith(getSignKey(), SignatureAlgorithm.HS256)
 			.compact();
 	}

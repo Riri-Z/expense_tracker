@@ -18,16 +18,17 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import com.expense_tracker.exception.user.DuplicateUserException;
+import com.expense_tracker.exception.user.FailedSendingResetPasswordEmail;
 import com.expense_tracker.exception.user.MissMatchedPasswordException;
 import com.expense_tracker.exception.user.UserAccessDenied;
 import com.expense_tracker.exception.user.UserException;
 import com.expense_tracker.exception.user.UserNotFoundException;
+import com.expense_tracker.exception.user_subscription.UserSubscriptionConflictException;
+import com.expense_tracker.exception.user_subscription.UserSubscriptionException;
+
+import jakarta.validation.ConstraintViolationException;
 
 @ControllerAdvice
-/*
- * @Order(Ordered.HIGHEST_PRECEDENCE) // To be sure that this class is called before
- * classes // provided by spring
- */
 public class GlobalExceptionHandler {
 
 	private static final Logger logg = LoggerFactory.getLogger(GlobalExceptionHandler.class);
@@ -46,6 +47,14 @@ public class GlobalExceptionHandler {
 
 		ErrorResponse error = new ErrorResponse(HttpStatus.FORBIDDEN.value(), "AccessDenied", ex.getMessage());
 		return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+	}
+
+	@ExceptionHandler(IllegalArgumentException.class)
+	public ResponseEntity<ErrorResponse> handlerIllegalArgumentException(IllegalArgumentException ex) {
+		ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Invalid input provided",
+				ex.getMessage());
+
+		return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
@@ -112,6 +121,35 @@ public class GlobalExceptionHandler {
 		ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "User operation failed",
 				ex.getMessage());
 		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+	}
+
+	@ExceptionHandler(ConstraintViolationException.class)
+	public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException ex) {
+		ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Invalid input provided",
+				ex.getMessage());
+
+		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+	}
+
+	@ExceptionHandler(UserSubscriptionConflictException.class)
+	public ResponseEntity<ErrorResponse> handleUserSubscriptionException(UserSubscriptionConflictException ex) {
+		ErrorResponse error = new ErrorResponse(HttpStatus.CONFLICT.value(), "This user has already this subscription",
+				ex.getMessage());
+		return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+	}
+
+	@ExceptionHandler(FailedSendingResetPasswordEmail.class)
+	public ResponseEntity<ErrorResponse> handleSendEmailException(FailedSendingResetPasswordEmail ex) {
+		ErrorResponse error = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+				"Sending email operation failed", ex.getMessage());
+		return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+	@ExceptionHandler(UserSubscriptionException.class)
+	public ResponseEntity<ErrorResponse> handleUserSubscriptionException(UserSubscriptionException ex) {
+		ErrorResponse error = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+				"User subscription operation failed", ex.getMessage());
+		return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
 }

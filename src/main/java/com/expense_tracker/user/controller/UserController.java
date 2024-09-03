@@ -1,6 +1,7 @@
 package com.expense_tracker.user.controller;
 
 import java.nio.file.AccessDeniedException;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,10 +24,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.expense_tracker.common.apiResponse.ApiResponse;
 import com.expense_tracker.exception.user.UserAccessDenied;
 import com.expense_tracker.exception.user.UserNotFoundException;
 import com.expense_tracker.jwt.JwtService;
 import com.expense_tracker.security.AuthRequest;
+import com.expense_tracker.subscription.dto.AddUserSubscriptionDTO;
+import com.expense_tracker.subscription.dto.UserSubscriptionResponseDTO;
 import com.expense_tracker.user.dto.UpdatePasswordDTO;
 import com.expense_tracker.user.dto.UpdateUserDTO;
 import com.expense_tracker.user.dto.UserInfoDTO;
@@ -41,9 +45,15 @@ import jakarta.validation.Valid;
 @RequestMapping("/auth")
 public class UserController {
 
-	private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+	/*
+	 * TODO: Create IUserService to link controller to service, and not access UserService
+	 * directly. It's like we create a contract between controller and service , and limit
+	 * their dependency Also, it will ease the creation of mock test,
+	 *
+	 */
+	private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
-	private final UserInfoService service;
+	private final UserInfoService userInfoService;
 
 	private final JwtService jwtService;
 
@@ -51,10 +61,10 @@ public class UserController {
 
 	private final UserInfoRepository userInfoRepository;
 
-	public UserController(UserInfoService service, JwtService jwtService, AuthenticationManager authenticationManager,
-			UserInfoRepository userInfoRepository) {
+	public UserController(UserInfoService userInfoService, JwtService jwtService,
+			AuthenticationManager authenticationManager, UserInfoRepository userInfoRepository) {
 
-		this.service = service;
+		this.userInfoService = userInfoService;
 		this.jwtService = jwtService;
 		this.authenticationManager = authenticationManager;
 		this.userInfoRepository = userInfoRepository;
@@ -69,7 +79,7 @@ public class UserController {
 	// @PreAuthorize("hasAuthority('ROLE_USER','ROLE_ADMIN')")
 	public ResponseEntity<UserInfoDTO> updateUser(@PathVariable Long id, @RequestBody UpdateUserDTO updateUserDTO)
 			throws AccessDeniedException {
-		logger.info("Entering updateUser method for id: {}", id);
+		log.info("Entering updateUser method for id: {}", id);
 
 		// check if id from jwt == id in path
 		// get auth fronm spring context
@@ -86,13 +96,21 @@ public class UserController {
 
 		// Check if id from jwt is equals id from path
 		if (!userIdFromJwt.equals(id)) {
-			logger.warn("Access denied for user {} trying to update user {}", userIdFromJwt, id);
+			log.warn("Access denied for user {} trying to update user {}", userIdFromJwt, id);
 			throw new AccessDeniedException("You are not authorized to update this user");
 		}
 
-		UserInfoDTO updatedUser = service.updateUser(id, updateUserDTO);
+		UserInfoDTO updatedUser = userInfoService.updateUser(id, updateUserDTO);
 		return ResponseEntity.ok(updatedUser);
 
+	}
+
+	@GetMapping("user/{id}")
+	public ApiResponse<UserInfoDTO> getUserInfo(@AuthenticationPrincipal @PathVariable Long id) {
+
+		UserInfoDTO result = userInfoService.findById(id);
+
+		return new ApiResponse<>("ok", result);
 	}
 
 	/**
@@ -106,22 +124,35 @@ public class UserController {
 	public ResponseEntity<String> updatePassword(@AuthenticationPrincipal UserInfoDetails userInfoDetails,
 			@Valid @RequestBody UpdatePasswordDTO request) {
 
-		service.updatePassword(userInfoDetails.getId(), request.getOldPassword(), request.getNewPassword());
+		userInfoService.updatePassword(userInfoDetails.getId(), request.getOldPassword(), request.getNewPassword());
 		return ResponseEntity.ok("Password updated successfully");
 
 	}
 
 	@PostMapping("/addNewUser")
 	public ResponseEntity<UserInfoDTO> addNewUser(@Valid @RequestBody UserInfo userInfo) {
-		UserInfoDTO addedUser = service.addUser(userInfo);
+		UserInfoDTO addedUser = userInfoService.addUser(userInfo);
 		return ResponseEntity.ok(addedUser);
 	}
 
+	@PostMapping("user/add-subscription")
+	public ApiResponse<UserSubscriptionResponseDTO> addNewSubscription(
+			@AuthenticationPrincipal @RequestBody @Valid AddUserSubscriptionDTO payload) {
+		// get auth from spring context
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		UserInfoDetails userDetails = (UserInfoDetails) authentication.getPrincipal();
+
+		Long id = userDetails.getId();
+		UserSubscriptionResponseDTO result = userInfoService.addUserSubscription(id, payload);
+		return new ApiResponse<>("ok", result);
+	}
+
 	@DeleteMapping("user/delete")
-	public ResponseEntity<String> deleteUser(@AuthenticationPrincipal UserInfoDetails userInfoDetails) {
+	public ApiResponse<String> deleteUser(@AuthenticationPrincipal UserInfoDetails userInfoDetails) {
 		Long id = userInfoDetails.getId();
-		service.deleteUser(id);
-		return ResponseEntity.ok("User with id : " + id + " was deleted ");
+		userInfoService.deleteUser(id);
+		String responseDetails = "User ID : " + id + " 6has been removed.";
+		return new ApiResponse<>("ok", responseDetails);
 	}
 
 	@GetMapping("/user/userProfile")
@@ -144,7 +175,7 @@ public class UserController {
 	}
 
 	@PostMapping("/generateToken")
-	public ResponseEntity<String> authenticateAndGetToken(@RequestBody AuthRequest authRequest) {
+	public ApiResponse<Map<String, String>> authenticateAndGetToken(@RequestBody @Valid AuthRequest authRequest) {
 		try {
 
 			Authentication authentication = authenticationManager.authenticate(
@@ -158,13 +189,16 @@ public class UserController {
 				UserInfo userInfo = userInfoRepository.findByUsername(userDetails.getUsername())
 					.orElseThrow(() -> new UserNotFoundException("User not found: " + userDetails.getUsername()));
 				String idUser = String.valueOf((userInfo.getId()));
-				return ResponseEntity.ok(jwtService.generateToken(idUser));
+				Map<String, String> tokenJwt = jwtService.generateToken(idUser, userInfo.getUsername());
+				return new ApiResponse<>("ok", tokenJwt);
 			}
 			else {
-				throw new UserAccessDenied("Cannot generate token");
+				throw new UserAccessDenied("Cannot generate token, authentication failed");
 			}
 		}
 		catch (InternalAuthenticationServiceException e) {
+			log.error("Authentication failed for user: {}", authRequest.getUsername(), e);
+
 			throw new UserAccessDenied("Cannot generate token");
 		}
 	}
