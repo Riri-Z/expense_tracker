@@ -46,9 +46,9 @@ public class SecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter authFilter,
 			AuthenticationProvider authenticationProvider) throws Exception {
 		return http.csrf(csrf -> csrf.disable()) // disable for stateless apis
-			.authorizeHttpRequests(auth -> auth
-				.requestMatchers("/auth/welcome", "/auth/addNewUser", "/auth/generateToken",
-						"/auth/user/request-password-reset", "/reset-password*")
+			.authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
+				.requestMatchers("/auth/welcome", "/auth/addNewUser", "/auth/generateToken", "/request-password-reset",
+						"/reset-password*")
 				.permitAll()
 				.requestMatchers("/auth/user/**")
 				.hasAnyRole("USER", "ADMIN")
