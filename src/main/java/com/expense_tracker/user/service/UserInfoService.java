@@ -67,6 +67,13 @@ public class UserInfoService implements UserDetailsService {
 			.orElseThrow(() -> new UserNotFoundException("User not found with id: " + email));
 	}
 
+	public UserInfoDTO findById(Long id) {
+		UserInfo userInfo = repository.findById(id)
+			.orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+
+		return userInfoMapper.userInfoToDTO(userInfo);
+	}
+
 	public UserDetails loadUserById(Long id) throws UserNotFoundException {
 		UserInfo user = repository.findById(id)
 			.orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));

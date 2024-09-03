@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.expense_tracker.email.service.EmailService;
+import com.expense_tracker.common.apiResponse.ApiResponse;
 import com.expense_tracker.exception.user.UserAccessDenied;
 import com.expense_tracker.exception.user.UserNotFoundException;
 import com.expense_tracker.jwt.JwtService;
@@ -57,21 +57,17 @@ public class UserController {
 
 	private final JwtService jwtService;
 
-	private final EmailService emailService;
-
 	private final AuthenticationManager authenticationManager;
 
 	private final UserInfoRepository userInfoRepository;
 
 	public UserController(UserInfoService userInfoService, JwtService jwtService,
-			AuthenticationManager authenticationManager, UserInfoRepository userInfoRepository,
-			EmailService emailService) {
+			AuthenticationManager authenticationManager, UserInfoRepository userInfoRepository) {
 
 		this.userInfoService = userInfoService;
 		this.jwtService = jwtService;
 		this.authenticationManager = authenticationManager;
 		this.userInfoRepository = userInfoRepository;
-		this.emailService = emailService;
 	}
 
 	@GetMapping("/welcome")
@@ -109,6 +105,14 @@ public class UserController {
 
 	}
 
+	@GetMapping("user/{id}")
+	public ApiResponse<UserInfoDTO> getUserInfo(@AuthenticationPrincipal @PathVariable Long id) {
+
+		UserInfoDTO result = userInfoService.findById(id);
+
+		return new ApiResponse<>("ok", result);
+	}
+
 	/**
 	 * PUT /user/password/{id} : Update the password of the user with the given id, and
 	 * new passord and old password in the request body
@@ -132,22 +136,23 @@ public class UserController {
 	}
 
 	@PostMapping("user/add-subscription")
-	public ResponseEntity<UserSubscriptionResponseDTO> addNewSubscription(
+	public ApiResponse<UserSubscriptionResponseDTO> addNewSubscription(
 			@AuthenticationPrincipal @RequestBody @Valid AddUserSubscriptionDTO payload) {
-		// get auth fronm spring context
+		// get auth from spring context
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserInfoDetails userDetails = (UserInfoDetails) authentication.getPrincipal();
 
 		Long id = userDetails.getId();
 		UserSubscriptionResponseDTO result = userInfoService.addUserSubscription(id, payload);
-		return ResponseEntity.ok(result);
+		return new ApiResponse<>("ok", result);
 	}
 
 	@DeleteMapping("user/delete")
-	public ResponseEntity<String> deleteUser(@AuthenticationPrincipal UserInfoDetails userInfoDetails) {
+	public ApiResponse<String> deleteUser(@AuthenticationPrincipal UserInfoDetails userInfoDetails) {
 		Long id = userInfoDetails.getId();
 		userInfoService.deleteUser(id);
-		return ResponseEntity.ok("User with id : " + id + " was deleted ");
+		String responseDetails = "User ID : " + id + " 6has been removed.";
+		return new ApiResponse<>("ok", responseDetails);
 	}
 
 	@GetMapping("/user/userProfile")
@@ -170,7 +175,7 @@ public class UserController {
 	}
 
 	@PostMapping("/generateToken")
-	public ResponseEntity<Map<String, String>> authenticateAndGetToken(@RequestBody @Valid AuthRequest authRequest) {
+	public ApiResponse<Map<String, String>> authenticateAndGetToken(@RequestBody @Valid AuthRequest authRequest) {
 		try {
 
 			Authentication authentication = authenticationManager.authenticate(
@@ -184,7 +189,8 @@ public class UserController {
 				UserInfo userInfo = userInfoRepository.findByUsername(userDetails.getUsername())
 					.orElseThrow(() -> new UserNotFoundException("User not found: " + userDetails.getUsername()));
 				String idUser = String.valueOf((userInfo.getId()));
-				return ResponseEntity.ok(jwtService.generateToken(idUser, userInfo.getUsername()));
+				Map<String, String> tokenJwt = jwtService.generateToken(idUser, userInfo.getUsername());
+				return new ApiResponse<>("ok", tokenJwt);
 			}
 			else {
 				throw new UserAccessDenied("Cannot generate token, authentication failed");
