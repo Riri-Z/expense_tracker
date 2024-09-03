@@ -48,13 +48,13 @@ public class JwtService {
 	// Create a JWT token with specified claims and subject (id)
 	private String createToken(Map<String, Object> claims, String id) {
 		return Jwts.builder()
-				.setClaims(claims)
-				.setSubject(id)
-				.setIssuedAt(new Date())
-				// Token valid for 12h
-				.setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 12))
-				.signWith(getSignKey(), SignatureAlgorithm.HS256)
-				.compact();
+			.setClaims(claims)
+			.setSubject(id)
+			.setIssuedAt(new Date())
+			// Token valid for 12h
+			.setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 12))
+			.signWith(getSignKey(), SignatureAlgorithm.HS256)
+			.compact();
 	}
 
 	// Get the signigenerateTokenng key for JWT token
@@ -96,7 +96,8 @@ public class JwtService {
 
 		if (userDetails instanceof UserInfoDetails userInfoDetails) {
 			userIdFromUserDetails = String.valueOf(userInfoDetails.getId());
-		} else {
+		}
+		else {
 			throw new IllegalArgumentException("UserDetails must be an instance of userInfoDetails");
 		}
 
