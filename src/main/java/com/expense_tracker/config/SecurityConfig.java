@@ -45,10 +45,11 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter authFilter,
 			AuthenticationProvider authenticationProvider) throws Exception {
+				
 		return http.csrf(csrf -> csrf.disable()) // disable for stateless apis
 			.authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
 				.requestMatchers("/auth/welcome", "/auth/addNewUser", "/auth/generateToken", "/request-password-reset",
-						"/reset-password*")
+						"/reset-password*", "/swagger-ui/**", "/v3/api-docs/**")
 				.permitAll()
 				.requestMatchers("/auth/user/**")
 				.hasAnyRole("USER", "ADMIN")
