@@ -9,6 +9,7 @@ import com.expense_tracker.subscription.enums.SubscriptionStatus;
 import com.expense_tracker.user.entity.UserInfo;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
@@ -20,18 +21,24 @@ public class UserSubscriptionDTO {
 
 	private Subscription subscription;
 
+	@NotNull
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
 	private ZonedDateTime startDate;
 
+	@NotNull
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
 	private ZonedDateTime endDate;
 
+	@NotNull
 	private ZonedDateTime renewalDate;
 
+	@NotNull
 	private BigDecimal amount;
 
+	@NotNull
 	private BillingCycle billingCycle;
 
+	@NotNull
 	private SubscriptionStatus status;
 
 }
