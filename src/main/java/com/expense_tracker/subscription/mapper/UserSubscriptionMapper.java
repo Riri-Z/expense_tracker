@@ -29,7 +29,6 @@ public class UserSubscriptionMapper {
 
 	public static UserSubscriptionDTO toUserSubscriptionTDO(UserSubscriptionDTO userSubscriptionDTO) {
 		log.info("Starting to map AddUserSubscriptionDTO to UserSubscriptionDTO : {}", userSubscriptionDTO);
-		// UserSubscriptionDTO userSubscriptionDTO = new UserSubscriptionDTO();
 		// Manual mapping with BeanUtil
 		BeanUtils.copyProperties(userSubscriptionDTO, userSubscriptionDTO);
 

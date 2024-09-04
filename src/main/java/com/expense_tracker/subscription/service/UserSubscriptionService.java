@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import com.expense_tracker.exception.user_subscription.UserSubscriptionConflictException;
@@ -149,6 +150,19 @@ public class UserSubscriptionService {
 		catch (Exception ex) {
 			throw ex;
 		}
+	}
+
+	public String delete(Long id, String username) {
+		UserSubscription userSubscription = userSubscriptionRepository.findById(id)
+			.orElseThrow(() -> new EntityNotFoundException("userSubscription  not found, id : " + id));
+
+		if (!username.equals(userSubscription.getUserInfo().getUsername())) {
+			throw new AccessDeniedException("You don't have permission to delete this subscription ");
+		}
+		// le but est de supprimer la table de jointure avec l'id
+		userSubscriptionRepository.deleteById(id);
+
+		return "User subscription deleted successfuly";
 	}
 
 }

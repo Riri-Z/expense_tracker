@@ -1,6 +1,5 @@
 package com.expense_tracker.exception;
 
-import java.nio.file.AccessDeniedException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
@@ -26,6 +26,7 @@ import com.expense_tracker.exception.user.UserNotFoundException;
 import com.expense_tracker.exception.user_subscription.UserSubscriptionConflictException;
 import com.expense_tracker.exception.user_subscription.UserSubscriptionException;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 
 @ControllerAdvice
@@ -39,6 +40,14 @@ public class GlobalExceptionHandler {
 
 		ErrorResponse error = new ErrorResponse(HttpStatus.FORBIDDEN.value(), "AccessDenied", ex.getMessage());
 		return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+	}
+
+	@ExceptionHandler(EntityNotFoundException.class)
+	public ResponseEntity<ErrorResponse> handleAccessEntityNotFoundException(EntityNotFoundException ex) {
+		logg.warn("EntityNotFoundException: {}", ex.getMessage());
+
+		ErrorResponse error = new ErrorResponse(HttpStatus.NOT_FOUND.value(), "Missing entity", ex.getMessage());
+		return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
 	}
 
 	@ExceptionHandler(AccessDeniedException.class)

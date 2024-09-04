@@ -1,6 +1,8 @@
 package com.expense_tracker.subscription.controller;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -40,6 +42,13 @@ public class SubscriptionController {
 	public ApiResponse<UserSubscriptionResponseDTO> updateSubscription(
 			@AuthenticationPrincipal @Valid @RequestBody UserSubscriptionDTO payload, @PathVariable Long id) {
 		UserSubscriptionResponseDTO result = userSubscriptionService.updateUserSubscription(payload, id);
+		return new ApiResponse<>("ok", result);
+	}
+
+	@DeleteMapping("/delete-user-subscription/{id}")
+	public ApiResponse<String> deleteUserSubscription(@AuthenticationPrincipal UserDetails userDetails,
+			@PathVariable Long id) {
+		String result = userSubscriptionService.delete(id, userDetails.getUsername());
 		return new ApiResponse<>("ok", result);
 	}
 
