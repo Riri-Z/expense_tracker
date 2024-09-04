@@ -12,8 +12,10 @@ import org.springframework.validation.annotation.Validated;
 
 import com.expense_tracker.exception.user.DuplicateUserException;
 import com.expense_tracker.exception.user.MissMatchedPasswordException;
+import com.expense_tracker.exception.user.UserException;
 import com.expense_tracker.exception.user.UserNotFoundException;
 import com.expense_tracker.password.service.PasswordResetTokenService;
+import com.expense_tracker.user.dto.CreateUserDTO;
 import com.expense_tracker.user.dto.UpdateUserDTO;
 import com.expense_tracker.user.dto.UserInfoDTO;
 import com.expense_tracker.user.entity.UserInfo;
@@ -79,55 +81,75 @@ public class UserInfoService implements UserDetailsService {
 	}
 
 	public void resetPassword(UserInfo userInfo, String newPassword) {
+		try {
 
-		userInfo.setPassword(encoder.encode(newPassword));
-		repository.save(userInfo);
+			userInfo.setPassword(encoder.encode(newPassword));
+			repository.save(userInfo);
+		}
+		catch (Exception ex) {
+			throw new UserException(ex.getMessage());
+		}
 
 	}
 
 	@Validated
-	public UserInfoDTO addUser(@Valid UserInfo userInfo) {
-		// verify if username or email already exist
+	public UserInfoDTO addUser(@Valid CreateUserDTO createUserInfoDTO) {
 
-		UserFieldValidator.validateUserFields(userInfo.getName(), "Name");
-		UserFieldValidator.validateUserFields(userInfo.getEmail(), "Email");
-		UserFieldValidator.validateUserFields(userInfo.getUsername(), "Username");
-		UserFieldValidator.validateUserFields(userInfo.getPassword(), "Password");
-		UserFieldValidator.validateUserFields(userInfo.getRoles(), "Roles");
+		try {
 
-		// check unicity
-		if (Boolean.TRUE.equals(repository.existsByEmail(userInfo.getEmail()))) {
-			throw new DuplicateUserException("Email already exists :" + userInfo.getEmail());
+			UserFieldValidator.validateUserFields(createUserInfoDTO.getName(), "Name");
+			UserFieldValidator.validateUserFields(createUserInfoDTO.getEmail(), "Email");
+			UserFieldValidator.validateUserFields(createUserInfoDTO.getUsername(), "Username");
+			UserFieldValidator.validateUserFields(createUserInfoDTO.getPassword(), "Password");
+			UserFieldValidator.validateUserFields(createUserInfoDTO.getRoles(), "Roles");
+
+			// check unicity
+			if (Boolean.TRUE.equals(repository.existsByEmail(createUserInfoDTO.getEmail()))) {
+				throw new DuplicateUserException("Email already exists :" + createUserInfoDTO.getEmail());
+			}
+			if (Boolean.TRUE.equals(repository.existsByUsername((createUserInfoDTO.getUsername())))) {
+				throw new DuplicateUserException("Username already exists :" + createUserInfoDTO.getUsername());
+			}
+			// Encode password before saving the user
+			createUserInfoDTO.setPassword(encoder.encode(createUserInfoDTO.getPassword()));
+			// createUserInfoDTO to userInfo
+			UserInfo userInfo = userInfoMapper.createUserInfoDTOTOUserInfo(createUserInfoDTO);
+
+			UserInfo savedUser = repository.save(userInfo);
+
+			return userInfoMapper.userInfoToDTO(savedUser);
 		}
-		if (Boolean.TRUE.equals(repository.existsByUsername((userInfo.getUsername())))) {
-			throw new DuplicateUserException("Username already exists :" + userInfo.getUsername());
+		catch (DuplicateUserException ex) {
+			throw ex;
 		}
-		// Encode password before saving the user
-		userInfo.setPassword(encoder.encode(userInfo.getPassword()));
-		UserInfo savedUser = repository.save(userInfo);
-
-		return userInfoMapper.userInfoToDTO(savedUser);
+		catch (Exception ex) { // unexpected Exception
+			log.error("Error while adding new user", ex);
+			throw new UserException("Error while adding new user : " + ex.getMessage());
+		}
 	}
 
 	public boolean deleteUser(Long id) {
-		log.info("Start Deleting user with id: {}", id);
-
-		boolean userExist = repository.existsById(id);
-		log.info("user find with id: {}", id);
-
-		if (!userExist) {
-			log.warn("user missing with id: {}", id);
-
-			throw new UserNotFoundException("User with the following " + id + " doesn't exist");
-		}
-
 		try {
+			log.info("Start Deleting user with id: {}", id);
+
+			boolean userExist = repository.existsById(id);
+			log.info("user find with id: {}", id);
+
+			if (!userExist) {
+				log.warn("user missing with id: {}", id);
+
+				throw new UserNotFoundException("User with the following " + id + " doesn't exist");
+			}
+
 			log.warn("deleting user with id: {}", id);
 
 			repository.deleteById(id);
 			log.info("SUCCESS delete id: {}", id);
 
 			return true;
+		}
+		catch (UserNotFoundException ex) {
+			throw ex;
 		}
 		catch (Exception ex) {
 			log.error("Failed deleting the following user id  : {} ", id);
@@ -137,53 +159,67 @@ public class UserInfoService implements UserDetailsService {
 
 	@Validated
 	public UserInfoDTO updateUser(@Valid Long id, UpdateUserDTO updateUserDTO) {
-		log.info("Updating user with updateUserDTO: {}", updateUserDTO);
+		try {
 
-		UserInfo user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id + NOT_FOUND));
-		UserFieldValidator.validateUserFields(updateUserDTO.getName(), "Name");
-		UserFieldValidator.validateUserFields(updateUserDTO.getEmail(), "Email");
-		UserFieldValidator.validateUserFields(updateUserDTO.getUsername(), "Username");
-		// Mise à jour des champs de l'utilisateur
-		if (updateUserDTO.getName() != null && !updateUserDTO.getName().trim().isEmpty()) {
-			user.setName(updateUserDTO.getName());
-			log.debug("Updated name for user {}", id);
+			log.info("Updating user with updateUserDTO: {}", updateUserDTO);
+
+			UserInfo user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id + NOT_FOUND));
+			UserFieldValidator.validateUserFields(updateUserDTO.getName(), "Name");
+			UserFieldValidator.validateUserFields(updateUserDTO.getEmail(), "Email");
+			UserFieldValidator.validateUserFields(updateUserDTO.getUsername(), "Username");
+			// Mise à jour des champs de l'utilisateur
+			if (updateUserDTO.getName() != null && !updateUserDTO.getName().trim().isEmpty()) {
+				user.setName(updateUserDTO.getName());
+				log.debug("Updated name for user {}", id);
+			}
+			if (updateUserDTO.getEmail() != null && !updateUserDTO.getEmail().trim().isEmpty()) {
+				validateUniqueEmail(updateUserDTO.getEmail(), id);
+				user.setEmail(updateUserDTO.getEmail());
+				log.debug("Updated email for user {}", id);
+			}
+
+			if (updateUserDTO.getUsername() != null && !updateUserDTO.getUsername().trim().isEmpty()) {
+				user.setUsername(updateUserDTO.getUsername());
+				log.debug("Updated username for user {}", id);
+
+			}
+
+			UserInfo updateUserInfo = repository.save(user);
+			log.info("Successfully updated user with id: {}", id);
+
+			return userInfoMapper.userInfoToDTO(updateUserInfo);
 		}
-		if (updateUserDTO.getEmail() != null && !updateUserDTO.getEmail().trim().isEmpty()) {
-			validateUniqueEmail(updateUserDTO.getEmail(), id);
-			user.setEmail(updateUserDTO.getEmail());
-			log.debug("Updated email for user {}", id);
+		catch (Exception ex) {
+			throw new UserException(ex.getMessage());
 		}
-
-		if (updateUserDTO.getUsername() != null && !updateUserDTO.getUsername().trim().isEmpty()) {
-			user.setUsername(updateUserDTO.getUsername());
-			log.debug("Updated username for user {}", id);
-
-		}
-
-		UserInfo updateUserInfo = repository.save(user);
-		log.info("Successfully updated user with id: {}", id);
-
-		return userInfoMapper.userInfoToDTO(updateUserInfo);
 	}
 
 	public boolean updatePassword(Long id, String oldPassword, String newPassword) throws MissMatchedPasswordException {
+		try {
 
-		// Get user from bdd
-		UserInfo userInfo = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id + NOT_FOUND));
-		// Get encoded password from userInfo
-		String encodedPassword = userInfo.getPassword();
-		// Verify if old password is correct
-		boolean isUserProvidedOldPassworCorrect = encoder.matches(oldPassword, encodedPassword);
-		// if mismatch, throw exception
-		if (!isUserProvidedOldPassworCorrect) {
-			throw new MissMatchedPasswordException("Old password provided is incorrect");
+			// Get user from bdd
+			UserInfo userInfo = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id + NOT_FOUND));
+			// Get encoded password from userInfo
+			String encodedPassword = userInfo.getPassword();
+			// Verify if old password is correct
+			boolean isUserProvidedOldPassworCorrect = encoder.matches(oldPassword, encodedPassword);
+			// if mismatch, throw exception
+			if (!isUserProvidedOldPassworCorrect) {
+				throw new MissMatchedPasswordException("Old password provided is incorrect");
+			}
+			// Save encoded new password
+			userInfo.setPassword(encoder.encode(newPassword));
+			repository.save(userInfo);
+			log.info("Successfully updated password for user with id: {}", id);
+
+			return true;
 		}
-		// Save encoded new password
-		userInfo.setPassword(encoder.encode(newPassword));
-		repository.save(userInfo);
-		log.info("Successfully updated password for user with id: {}", id);
-
-		return true;
+		catch (UserNotFoundException | MissMatchedPasswordException ex) {
+			throw ex;
+		}
+		catch (Exception ex) {
+			throw new UserException(ex.getMessage());
+		}
 	}
 
 	private void validateUniqueEmail(String email, Long excludeUserId) {
