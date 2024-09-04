@@ -29,6 +29,7 @@ import com.expense_tracker.exception.user.UserAccessDenied;
 import com.expense_tracker.exception.user.UserNotFoundException;
 import com.expense_tracker.jwt.JwtService;
 import com.expense_tracker.security.AuthRequest;
+import com.expense_tracker.user.dto.CreateUserDTO;
 import com.expense_tracker.user.dto.UpdatePasswordDTO;
 import com.expense_tracker.user.dto.UpdateUserDTO;
 import com.expense_tracker.user.dto.UserInfoDTO;
@@ -128,8 +129,8 @@ public class UserController {
 	}
 
 	@PostMapping("/addNewUser")
-	public ResponseEntity<UserInfoDTO> addNewUser(@Valid @RequestBody UserInfo userInfo) {
-		UserInfoDTO addedUser = userInfoService.addUser(userInfo);
+	public ResponseEntity<UserInfoDTO> addNewUser(@Valid @RequestBody CreateUserDTO createUserDTO) {
+		UserInfoDTO addedUser = userInfoService.addUser(createUserDTO);
 		return ResponseEntity.ok(addedUser);
 	}
 

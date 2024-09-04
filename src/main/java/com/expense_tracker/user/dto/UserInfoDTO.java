@@ -1,15 +1,26 @@
 package com.expense_tracker.user.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class UserInfoDTO {
 
 	private Long id;
 
+	@NotBlank(message = "Name cannot be blank")
+	@Size(min = 3, max = 20)
 	private String name;
 
+	@NotBlank(message = "UserName cannot be blank")
+	@Size(min = 3, max = 20)
 	private String username;
 
+	@NotBlank(message = "Email cannot be blank")
+	@Email
 	private String email;
 
+	@NotBlank(message = "Roles cannot be blank")
 	private String roles;
 
 	public UserInfoDTO() {
