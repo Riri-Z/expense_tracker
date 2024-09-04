@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 
-import com.expense_tracker.subscription.dto.AddUserSubscriptionDTO;
 import com.expense_tracker.subscription.dto.SubscriptionDTO;
 import com.expense_tracker.subscription.dto.UserSubscriptionDTO;
 import com.expense_tracker.subscription.entity.Subscription;
@@ -19,20 +18,20 @@ public class UserSubscriptionMapper {
 		// constructeur privé pour empecher l'instanciation
 	}
 
-	public static SubscriptionDTO toSubscriptionDTO(AddUserSubscriptionDTO addUserSubscriptionDTO) {
+	public static SubscriptionDTO toSubscriptionDTO(UserSubscriptionDTO userSubscriptionDTO) {
 		SubscriptionDTO subscriptionDTO = new SubscriptionDTO();
-		Subscription subscription = addUserSubscriptionDTO.getSubscription();
+		Subscription subscription = userSubscriptionDTO.getSubscription();
 		String subscriptionName = subscription.getName();
 
 		subscriptionDTO.setName(subscriptionName);
 		return subscriptionDTO;
 	}
 
-	public static UserSubscriptionDTO toUserSubscriptionTDO(AddUserSubscriptionDTO addUserSubscriptionDTO) {
-		log.info("Starting to map AddUserSubscriptionDTO to UserSubscriptionDTO : {}", addUserSubscriptionDTO);
-		UserSubscriptionDTO userSubscriptionDTO = new UserSubscriptionDTO();
+	public static UserSubscriptionDTO toUserSubscriptionTDO(UserSubscriptionDTO userSubscriptionDTO) {
+		log.info("Starting to map AddUserSubscriptionDTO to UserSubscriptionDTO : {}", userSubscriptionDTO);
+		// UserSubscriptionDTO userSubscriptionDTO = new UserSubscriptionDTO();
 		// Manual mapping with BeanUtil
-		BeanUtils.copyProperties(addUserSubscriptionDTO, userSubscriptionDTO);
+		BeanUtils.copyProperties(userSubscriptionDTO, userSubscriptionDTO);
 
 		log.info("Mapped AddUserSubscriptionDTO to UserSubscriptionDTO : {}", userSubscriptionDTO);
 		return userSubscriptionDTO;

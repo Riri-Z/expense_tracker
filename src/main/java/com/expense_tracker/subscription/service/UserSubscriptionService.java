@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import com.expense_tracker.exception.user_subscription.UserSubscriptionConflictException;
 import com.expense_tracker.exception.user_subscription.UserSubscriptionException;
-import com.expense_tracker.subscription.dto.AddUserSubscriptionDTO;
 import com.expense_tracker.subscription.dto.SubscriptionDTO;
 import com.expense_tracker.subscription.dto.UserSubscriptionDTO;
 import com.expense_tracker.subscription.dto.UserSubscriptionResponseDTO;
@@ -20,6 +19,7 @@ import com.expense_tracker.subscription.repository.UserSubscriptionRepository;
 import com.expense_tracker.subscription.validator.UserSubscriptionValidator;
 import com.expense_tracker.user.entity.UserInfo;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ConstraintViolationException;
 
@@ -44,7 +44,7 @@ public class UserSubscriptionService {
 
 	@Transactional
 	public UserSubscriptionResponseDTO createUserSubscriptionWithNewSubscription(
-			AddUserSubscriptionDTO addUserSubscriptionDTO) {
+			UserSubscriptionDTO addUserSubscriptionDTO) {
 		try {
 			log.info("starting adding user subscription with userSubscriptionDTO: {}", addUserSubscriptionDTO);
 
@@ -115,6 +115,39 @@ public class UserSubscriptionService {
 		}
 		catch (ConstraintViolationException ex) {
 			throw new UserSubscriptionException(ex.getMessage());
+		}
+	}
+
+	@Transactional
+	public UserSubscriptionResponseDTO updateUserSubscription(UserSubscriptionDTO userSubscriptionDTO, Long id) {
+		try {
+
+			UserSubscription existingUserSubscription = userSubscriptionRepository.findById(id)
+				.orElseThrow(() -> new EntityNotFoundException("UserSubscription not found with id: " + id));
+
+			existingUserSubscription.setStartDate(userSubscriptionDTO.getStartDate());
+			existingUserSubscription.setEndDate(userSubscriptionDTO.getEndDate());
+			existingUserSubscription.setRenewalDate(userSubscriptionDTO.getRenewalDate());
+			existingUserSubscription.setAmount(userSubscriptionDTO.getAmount());
+			existingUserSubscription.setBillingCycle(userSubscriptionDTO.getBillingCycle());
+			existingUserSubscription.setStatus(userSubscriptionDTO.getStatus());
+
+			UserSubscription updatedUserSubscription = userSubscriptionRepository.save(existingUserSubscription);
+
+			UserInfo userInfo = updatedUserSubscription.getUserInfo();
+
+			Long userId = userInfo.getId();
+			Long subscriptionId = updatedUserSubscription.getSubscription().getId();
+			Long userSubscriptionId = updatedUserSubscription.getId();
+
+			return new UserSubscriptionResponseDTO(userId, subscriptionId, userSubscriptionId);
+		}
+		catch (EntityNotFoundException ex) {
+			throw ex;
+		}
+
+		catch (Exception ex) {
+			throw ex;
 		}
 	}
 
