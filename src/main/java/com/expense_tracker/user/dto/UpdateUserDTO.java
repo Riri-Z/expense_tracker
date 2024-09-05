@@ -17,15 +17,15 @@ import lombok.NoArgsConstructor;
 // @AllArgsConstructor Generate constructor with each parameters
 public class UpdateUserDTO {
 
-	@NotNull
+	@NotNull(message = "Name is required.")
 	@Size(min = 3, max = 20)
 	private String name;
 
-	@NotNull
+	@NotNull(message = "Email is required.")
 	@Email
 	private String email;
 
-	@NotNull
+	@NotNull(message = "Username is required.")
 	@Column(unique = true)
 	@Size(min = 3, max = 20)
 	private String username;

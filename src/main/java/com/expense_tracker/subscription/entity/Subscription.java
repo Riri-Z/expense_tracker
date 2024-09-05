@@ -3,6 +3,7 @@ package com.expense_tracker.subscription.entity;
 import java.util.List;
 
 import com.expense_tracker.common.entity.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -25,10 +26,12 @@ public class Subscription extends BaseEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	Long id;
 
-	@NotNull
+	@NotNull(message = "Name is required.")
 	@NotBlank
 	String name;
 
+	// @JsonBackReference is used on the one that will be omitted from serialization
+	@JsonBackReference
 	@OneToMany(mappedBy = "subscription")
 	private List<UserSubscription> userSubscription;
 
