@@ -62,11 +62,21 @@ public class UserInfoService implements UserDetailsService {
 			.orElseThrow(() -> new UserNotFoundException("User not found with id: " + email));
 	}
 
-	public UserInfoDTO findById(Long id) {
-		UserInfo userInfo = repository.findById(id)
-			.orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+	public UserInfo findUserAndHisSubscriptions(Long id) {
+		try {
 
-		return userInfoMapper.userInfoToDTO(userInfo);
+			Optional<UserInfo> userInfoAndHisSubscriptions = repository.findUserInfoAndHisSubscriptions(id);
+
+			if (userInfoAndHisSubscriptions.isEmpty()) {
+				throw new UserNotFoundException("User not found with id: " + id);
+			}
+
+			return userInfoAndHisSubscriptions.get();
+		}
+		catch (UserNotFoundException ex) {
+			throw new UserNotFoundException("user no found with the following id " + id);
+		}
+
 	}
 
 	public UserDetails loadUserById(Long id) throws UserNotFoundException {

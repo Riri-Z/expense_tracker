@@ -105,9 +105,9 @@ public class UserController {
 	}
 
 	@GetMapping("user/{id}")
-	public ApiResponse<UserInfoDTO> getUserInfo(@AuthenticationPrincipal @PathVariable Long id) {
+	public ApiResponse<UserInfo> getUserInfo(@AuthenticationPrincipal @PathVariable Long id) {
 
-		UserInfoDTO result = userInfoService.findById(id);
+		UserInfo result = userInfoService.findUserAndHisSubscriptions(id);
 
 		return new ApiResponse<>("ok", result);
 	}
@@ -117,7 +117,7 @@ public class UserController {
 	 * new passord and old password in the request body
 	 * @param id
 	 * @param entity
-	 * @return
+	 * @return String
 	 */
 	@PostMapping("user/update-password")
 	public ResponseEntity<String> updatePassword(@AuthenticationPrincipal UserInfoDetails userInfoDetails,

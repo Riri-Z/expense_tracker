@@ -9,16 +9,16 @@ public class ApiResponse<T> {
 
 	private String status;
 
-	private T details;
+	private T result;
 
-	public ApiResponse(String status, T details) {
+	public ApiResponse(String status, T result) {
 		this.status = status;
-		this.details = details;
+		this.result = result;
 	}
 
-	public static <T> ResponseEntity<ApiResponse<T>> success(T details) {
+	public static <T> ResponseEntity<ApiResponse<T>> success(T result) {
 
-		return ResponseEntity.ok(new ApiResponse<>("success", details));
+		return ResponseEntity.ok(new ApiResponse<>("success", result));
 	}
 
 }
