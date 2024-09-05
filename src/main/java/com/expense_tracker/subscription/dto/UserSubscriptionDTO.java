@@ -21,24 +21,24 @@ public class UserSubscriptionDTO {
 
 	private Subscription subscription;
 
-	@NotNull
+	@NotNull(message = "Start date is required.")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
 	private ZonedDateTime startDate;
 
-	@NotNull
+	@NotNull(message = "End date is required.")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
 	private ZonedDateTime endDate;
 
-	@NotNull
+	@NotNull(message = "Renewal date is required.")
 	private ZonedDateTime renewalDate;
 
-	@NotNull
+	@NotNull(message = "Amount is required.")
 	private BigDecimal amount;
 
-	@NotNull
+	@NotNull(message = "Billing cycle is required.")
 	private BillingCycle billingCycle;
 
-	@NotNull
+	@NotNull(message = "Status is required.")
 	private SubscriptionStatus status;
 
 }
