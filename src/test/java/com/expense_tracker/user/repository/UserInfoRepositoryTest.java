@@ -3,43 +3,17 @@ package com.expense_tracker.user.repository;
 import java.util.Optional;
 
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
+import com.expense_tracker.config.PostgresqlTestContainerBase;
 import com.expense_tracker.user.entity.UserInfo;
 
-@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-@Testcontainers
+/* @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@Testcontainers */
 @ActiveProfiles("test")
-class UserInfoRepositoryTest {
-
-	@LocalServerPort
-	private Integer port;
-
-	@Container
-	@ServiceConnection
-	static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
-
-	@BeforeAll
-	static void beforeAll() {
-		// Call autmaticaly before any test to start postgre
-		postgres.start();
-	}
-
-	@AfterAll
-	static void afterAll() {
-		postgres.stop();
-	}
+class UserInfoRepositoryTest extends PostgresqlTestContainerBase {
 
 	@Autowired
 	private UserInfoRepository userInfoRepository;
@@ -51,7 +25,7 @@ class UserInfoRepositoryTest {
 			.name("test")
 			.email("test@gmail.com")
 			.username("username")
-			.password("dzkoqdozqkod")
+			.password("myPassword")
 			.roles("ROLE_USER")
 			.build();
 
