@@ -120,18 +120,17 @@ public class UserController {
 	 * @return String
 	 */
 	@PostMapping("user/update-password")
-	public ResponseEntity<String> updatePassword(@AuthenticationPrincipal UserInfoDetails userInfoDetails,
+	public ApiResponse<String> updatePassword(@AuthenticationPrincipal UserInfoDetails userInfoDetails,
 			@Valid @RequestBody UpdatePasswordDTO request) {
 
 		userInfoService.updatePassword(userInfoDetails.getId(), request.getOldPassword(), request.getNewPassword());
-		return ResponseEntity.ok("Password updated successfully");
-
+		return new ApiResponse<>("ok", "Password updated");
 	}
 
 	@PostMapping("/addNewUser")
-	public ResponseEntity<UserInfoDTO> addNewUser(@Valid @RequestBody CreateUserDTO createUserDTO) {
+	public ApiResponse<UserInfoDTO> addNewUser(@Valid @RequestBody CreateUserDTO createUserDTO) {
 		UserInfoDTO addedUser = userInfoService.addUser(createUserDTO);
-		return ResponseEntity.ok(addedUser);
+		return new ApiResponse<>("ok", addedUser);
 	}
 
 	@DeleteMapping("user/delete")

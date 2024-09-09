@@ -26,6 +26,7 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Long> {
 	 * Fetch user with the given ID, and his subscriptions
 	 */
 	@Query("select ui from UserInfo ui left join fetch ui.userSubscriptions us left join fetch us.subscription left join  fetch us.subscription where ui.id = :id")
+	// TODO : change type to a new TDO or PROJECTION
 	Optional<UserInfo> findUserInfoAndHisSubscriptions(@Param("id") Long id);
 
 }
