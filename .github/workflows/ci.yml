@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - '**'
+permissions:
+  contents: read
+  actions: read
+  checks: write
 jobs:
   build:
     name: Maven Build
