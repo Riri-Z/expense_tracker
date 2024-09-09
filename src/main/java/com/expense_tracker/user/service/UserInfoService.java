@@ -28,7 +28,7 @@ import jakarta.validation.Valid;
 @Service
 public class UserInfoService implements UserDetailsService {
 
-	private static final String NOT_FOUND = " not found";
+	private static final String USER_NOT_FOUND_WITH_ID = "User not found with id";
 
 	private static final Logger log = LoggerFactory.getLogger(UserInfoService.class);
 
@@ -59,7 +59,7 @@ public class UserInfoService implements UserDetailsService {
 
 	public UserInfo findByEmail(String email) {
 		return repository.findByEmail(email)
-			.orElseThrow(() -> new UserNotFoundException("User not found with id: " + email));
+			.orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_WITH_ID + email));
 	}
 
 	public UserInfo findUserAndHisSubscriptions(Long id) {
@@ -68,7 +68,7 @@ public class UserInfoService implements UserDetailsService {
 			Optional<UserInfo> userInfoAndHisSubscriptions = repository.findUserInfoAndHisSubscriptions(id);
 
 			if (userInfoAndHisSubscriptions.isEmpty()) {
-				throw new UserNotFoundException("User not found with id: " + id);
+				throw new UserNotFoundException(USER_NOT_FOUND_WITH_ID + id);
 			}
 
 			return userInfoAndHisSubscriptions.get();
@@ -81,7 +81,7 @@ public class UserInfoService implements UserDetailsService {
 
 	public UserDetails loadUserById(Long id) throws UserNotFoundException {
 		UserInfo user = repository.findById(id)
-			.orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+			.orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_WITH_ID + id));
 
 		return new UserInfoDetails(user);
 	}
@@ -173,7 +173,7 @@ public class UserInfoService implements UserDetailsService {
 
 			log.info("Updating user with updateUserDTO: {}", updateUserDTO);
 
-			UserInfo user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id + NOT_FOUND));
+			UserInfo user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_WITH_ID  + id));
 			UserFieldValidator.validateUserFields(updateUserDTO.getName(), "Name");
 			UserFieldValidator.validateUserFields(updateUserDTO.getEmail(), "Email");
 			UserFieldValidator.validateUserFields(updateUserDTO.getUsername(), "Username");
@@ -208,7 +208,7 @@ public class UserInfoService implements UserDetailsService {
 		try {
 
 			// Get user from bdd
-			UserInfo userInfo = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id + NOT_FOUND));
+			UserInfo userInfo = repository.findById(id).orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_WITH_ID  + id));
 			// Get encoded password from userInfo
 			String encodedPassword = userInfo.getPassword();
 			// Verify if old password is correct
@@ -233,6 +233,8 @@ public class UserInfoService implements UserDetailsService {
 	}
 
 	private void validateUniqueEmail(String email, Long excludeUserId) {
+		// Check if email is already used by other user, that's why we exclude the current
+		// id user
 		if (Boolean.TRUE.equals(repository.existsByEmailAndIdNot(email, excludeUserId))) {
 			throw new DuplicateUserException("Email already in use: " + email);
 		}

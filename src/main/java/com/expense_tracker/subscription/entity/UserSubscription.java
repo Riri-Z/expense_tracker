@@ -69,7 +69,6 @@ public class UserSubscription extends BaseEntity {
 
 	@ManyToOne
 	@JoinColumn(name = "user_info_id")
-
 	// @JsonBackReference is used on the one that will be omitted from
 	// serialization. We could use JsonIgnore but @JsonBackReference is preferred
 	// @JsonBackReference gives better handling on deserialization

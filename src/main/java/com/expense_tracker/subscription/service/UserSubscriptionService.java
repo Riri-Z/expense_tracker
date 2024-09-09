@@ -85,8 +85,8 @@ public class UserSubscriptionService {
 
 		if (subscription.isPresent()) {
 			log.info("Start adding subscription with AddUseruserSubscriptionDTO: {}", userSubscriptionDTO);
-			Subscription sub = subscription.get();
-			return subscriptionRepository.save(sub);
+			Subscription savedSubscription = subscription.get();
+			return subscriptionRepository.save(savedSubscription);
 
 		}
 		else {
@@ -107,7 +107,7 @@ public class UserSubscriptionService {
 			Long userInfoId = userInfo.getId();
 			Subscription subscription = userSubscriptionDTO.getSubscription();
 			Long subscriptionId = subscription.getId();
-
+			// Check if user is already linked to this subscription
 			userSubscriptionValidator.validateUniqueUserSubscription(userInfoId, subscriptionId);
 			return userSubscriptionRepository.save(userSubscription);
 		}
