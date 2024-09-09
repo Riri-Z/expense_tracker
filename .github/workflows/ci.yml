@@ -19,7 +19,7 @@ jobs:
       - name: Create application-test.properties
         run: |
           echo "Start create configuration file"
-          echo "spring.datasource.driver-class-name=${{vars.APP_CONFIG_SPRING_DATASOURCE_DRIVER_CLASS_NAME}}" >> src/test/resources/application-test.properties
+          echo "spring.datasource.driver-class-name=${{vars.APP_CONFIG_SPRING_DATASOURCE_DRIVER_CLASS_NAME}}" > src/test/resources/application-test.properties
           echo "spring.jpa.hibernate.ddl-auto=${{vars.APP_CONFIG_SPRING_JPA_HIBERNATE_DDL_AUTO}}" >> src/test/resources/application-test.properties
           echo "jwt.secret=${{secrets.APP_CONFIG_JWT_SECRET}}" >> src/test/resources/application-test.properties
           echo "spring.mail.host=${{secrets.APP_CONFIG_SPRING_MAIL_HOST}}" >> src/test/resources/application-test.properties
