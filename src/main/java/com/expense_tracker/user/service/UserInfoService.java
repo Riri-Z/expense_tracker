@@ -173,7 +173,8 @@ public class UserInfoService implements UserDetailsService {
 
 			log.info("Updating user with updateUserDTO: {}", updateUserDTO);
 
-			UserInfo user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_WITH_ID  + id));
+			UserInfo user = repository.findById(id)
+				.orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_WITH_ID + id));
 			UserFieldValidator.validateUserFields(updateUserDTO.getName(), "Name");
 			UserFieldValidator.validateUserFields(updateUserDTO.getEmail(), "Email");
 			UserFieldValidator.validateUserFields(updateUserDTO.getUsername(), "Username");
@@ -208,7 +209,8 @@ public class UserInfoService implements UserDetailsService {
 		try {
 
 			// Get user from bdd
-			UserInfo userInfo = repository.findById(id).orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_WITH_ID  + id));
+			UserInfo userInfo = repository.findById(id)
+				.orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_WITH_ID + id));
 			// Get encoded password from userInfo
 			String encodedPassword = userInfo.getPassword();
 			// Verify if old password is correct

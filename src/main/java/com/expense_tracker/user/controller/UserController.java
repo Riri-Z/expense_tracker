@@ -108,7 +108,7 @@ public class UserController {
 	public ApiResponse<UserInfo> getUserInfo(@AuthenticationPrincipal @PathVariable Long id) {
 
 		UserInfo result = userInfoService.findUserAndHisSubscriptions(id);
-
+		log.info("return user info :{}", result);
 		return new ApiResponse<>("ok", result);
 	}
 
