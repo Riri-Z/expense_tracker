@@ -1,5 +1,7 @@
 package com.expense_tracker.config;
 
+import java.util.Arrays;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +20,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.expense_tracker.jwt.JwtAuthFilter;
 import com.expense_tracker.user.service.UserInfoService;
@@ -46,7 +51,8 @@ public class SecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter authFilter,
 			AuthenticationProvider authenticationProvider) throws Exception {
 
-		return http.csrf(csrf -> csrf.disable()) // disable for stateless apis
+		return http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+			.csrf(csrf -> csrf.disable()) // disable for stateless apis
 			.authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
 				.requestMatchers("/auth/welcome", "/auth/addNewUser", "/auth/generateToken", "/request-password-reset",
 						"/reset-password*", "/swagger-ui/**", "/v3/api-docs/**")
@@ -67,6 +73,19 @@ public class SecurityConfig {
 			.addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
 			.exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authenticationEntryPoint))
 			.build();
+	}
+
+	@Bean
+	public CorsConfigurationSource corsConfigurationSource() {
+		CorsConfiguration configuration = new CorsConfiguration();
+		// TODO ; UPDATE URL
+		configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+		configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+		configuration.setAllowCredentials(true);
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", configuration);
+		return source;
 	}
 
 	@Bean
