@@ -18,7 +18,7 @@ import com.expense_tracker.subscription.service.UserSubscriptionService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/subscriptions")
+@RequestMapping("/subscriptions")
 public class SubscriptionController {
 
 	private final UserSubscriptionService userSubscriptionService;
