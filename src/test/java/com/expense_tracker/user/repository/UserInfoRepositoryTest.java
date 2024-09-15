@@ -10,6 +10,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 
 import com.expense_tracker.config.PostgresqlTestContainerBase;
 import com.expense_tracker.subscription.entity.Subscription;
@@ -21,6 +22,8 @@ import com.expense_tracker.subscription.repository.UserSubscriptionRepository;
 import com.expense_tracker.user.entity.UserInfo;
 
 @ActiveProfiles("test")
+/* Workarround for loading jwt secret even it is in application-test.properties */
+@TestPropertySource(properties = { "jwt.secret=teqzezeqzezezqe" })
 class UserInfoRepositoryTest extends PostgresqlTestContainerBase {
 
 	@Autowired
